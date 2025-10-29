@@ -1,0 +1,2959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoQuest - Gamified Environmental Education</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; }
+        
+        .game-card:hover { transform: translateY(-5px); }
+        .drag-item { cursor: grab; }
+        .drag-item:active { cursor: grabbing; }
+        .drop-zone { min-height: 120px; }
+        .drop-zone.drag-over { background-color: rgba(34, 197, 94, 0.1); border-color: #22c55e; }
+        
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% { transform: translate3d(0,0,0); }
+            40%, 43% { transform: translate3d(0, -30px, 0); }
+            70% { transform: translate3d(0, -15px, 0); }
+            90% { transform: translate3d(0, -4px, 0); }
+        }
+        
+        .bounce { animation: bounce 1s ease; }
+        
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+            transition: width 0.5s ease;
+        }
+
+        .badge {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+        }
+
+        .quiz-option:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .correct-answer {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            animation: pulse 0.5s ease;
+        }
+
+        .wrong-answer {
+            background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-50 to-blue-50 min-h-screen">
+    <!-- Login Screen -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="text-6xl mb-4">🌱</div>
+                <h1 class="text-3xl font-bold text-green-600 mb-2">EcoQuest</h1>
+                <p class="text-gray-600">Gamified Environmental Education Platform</p>
+            </div>
+            
+            <form id="loginForm" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                    <input type="text" id="fullName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter your full name">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input type="email" id="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter your email">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">School/College</label>
+                    <input type="text" id="institution" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent" placeholder="Enter your institution name">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Grade/Year</label>
+                    <select id="grade" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <option value="">Select your grade/year</option>
+                        <option value="6">Grade 6</option>
+                        <option value="7">Grade 7</option>
+                        <option value="8">Grade 8</option>
+                        <option value="9">Grade 9</option>
+                        <option value="10">Grade 10</option>
+                        <option value="11">Grade 11</option>
+                        <option value="12">Grade 12</option>
+                        <option value="college-1">College Year 1</option>
+                        <option value="college-2">College Year 2</option>
+                        <option value="college-3">College Year 3</option>
+                        <option value="college-4">College Year 4</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                    <select id="gender" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent">
+                        <option value="">Select your gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                        <option value="prefer-not-to-say">Prefer not to say</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-3 px-6 rounded-lg font-semibold hover:from-green-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105">
+                    Start Your EcoQuest Journey! 🚀
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="hidden min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="text-3xl">🌱</div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-green-600">EcoQuest</h1>
+                            <p class="text-sm text-gray-600">Welcome back, <span id="userName"></span>!</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2 sm:space-x-6">
+                        <!-- Streak Display -->
+                        <div class="flex items-center space-x-1 sm:space-x-2 bg-orange-100 px-2 sm:px-4 py-2 rounded-full">
+                            <span class="text-lg sm:text-2xl">🔥</span>
+                            <span class="font-bold text-orange-700 text-sm sm:text-base" id="userStreak">0</span>
+                        </div>
+                        
+                        <!-- Points Display -->
+                        <div class="flex items-center space-x-1 sm:space-x-2 bg-yellow-100 px-2 sm:px-4 py-2 rounded-full">
+                            <span class="text-lg sm:text-2xl">⭐</span>
+                            <span class="font-bold text-yellow-700 text-sm sm:text-base" id="userPoints">0</span>
+                        </div>
+                        
+                        <!-- Level Display -->
+                        <div class="flex items-center space-x-1 sm:space-x-2 bg-green-100 px-2 sm:px-4 py-2 rounded-full">
+                            <span class="text-lg sm:text-2xl">🏆</span>
+                            <span class="font-bold text-green-700 text-sm sm:text-base">L<span id="userLevel" class="hidden sm:inline">evel </span><span id="userLevelNum">1</span></span>
+                        </div>
+                        
+                        <!-- Navigation Menu -->
+                        <div class="relative">
+                            <button onclick="toggleMenu()" class="bg-blue-500 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base">
+                                ☰ Menu
+                            </button>
+                            <div id="navMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
+                                <button onclick="showDashboard(); closeMenu()" class="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-t-lg">📊 Dashboard</button>
+                                <button onclick="showLeaderboard(); closeMenu()" class="w-full text-left px-4 py-2 hover:bg-gray-100">🏆 Leaderboard</button>
+                                <button onclick="showProfile(); closeMenu()" class="w-full text-left px-4 py-2 hover:bg-gray-100">👤 Profile</button>
+                                <button onclick="showStats(); closeMenu()" class="w-full text-left px-4 py-2 hover:bg-gray-100">📈 Statistics</button>
+                                <hr class="my-1">
+                                <button onclick="logout(); closeMenu()" class="w-full text-left px-4 py-2 hover:bg-red-100 text-red-600 rounded-b-lg">🚪 Logout</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+            
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="space-y-6 sm:space-y-8">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-green-400 to-blue-500 rounded-2xl shadow-lg p-4 sm:p-6 text-white">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                        <div>
+                            <h2 class="text-xl sm:text-2xl font-bold mb-2">Welcome back, <span id="dashboardUserName"></span>! 🌱</h2>
+                            <p class="text-sm sm:text-base opacity-90">Continue your eco-learning journey today</p>
+                        </div>
+                        <div class="mt-4 sm:mt-0 text-center">
+                            <div class="text-2xl sm:text-3xl font-bold" id="dashboardStreak">0</div>
+                            <div class="text-xs sm:text-sm opacity-90">Day Streak 🔥</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6">
+                    <div class="bg-white rounded-xl shadow-lg p-3 sm:p-4 text-center">
+                        <div class="text-2xl sm:text-3xl mb-1 sm:mb-2">⭐</div>
+                        <div class="text-lg sm:text-xl font-bold text-yellow-600" id="dashboardPoints">0</div>
+                        <div class="text-xs sm:text-sm text-gray-600">Points</div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-3 sm:p-4 text-center">
+                        <div class="text-2xl sm:text-3xl mb-1 sm:mb-2">🏆</div>
+                        <div class="text-lg sm:text-xl font-bold text-green-600" id="dashboardLevel">1</div>
+                        <div class="text-xs sm:text-sm text-gray-600">Level</div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-3 sm:p-4 text-center">
+                        <div class="text-2xl sm:text-3xl mb-1 sm:mb-2">🎮</div>
+                        <div class="text-lg sm:text-xl font-bold text-purple-600" id="dashboardGamesPlayed">0</div>
+                        <div class="text-xs sm:text-sm text-gray-600">Games</div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-lg p-3 sm:p-4 text-center">
+                        <div class="text-2xl sm:text-3xl mb-1 sm:mb-2">📚</div>
+                        <div class="text-lg sm:text-xl font-bold text-blue-600" id="dashboardLessonsCompleted">0</div>
+                        <div class="text-xs sm:text-sm text-gray-600">Lessons</div>
+                    </div>
+                </div>
+
+                <!-- Progress Overview -->
+                <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Your Progress</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                        <div class="text-center">
+                            <div class="text-3xl sm:text-4xl mb-2">📚</div>
+                            <h3 class="font-semibold text-gray-700 text-sm sm:text-base">Lessons Completed</h3>
+                            <p class="text-xl sm:text-2xl font-bold text-green-600" id="lessonsCompleted">0/6</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl sm:text-4xl mb-2">🎯</div>
+                            <h3 class="font-semibold text-gray-700 text-sm sm:text-base">Quizzes Passed</h3>
+                            <p class="text-xl sm:text-2xl font-bold text-blue-600" id="quizzesPassed">0/5</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl sm:text-4xl mb-2">🏅</div>
+                            <h3 class="font-semibold text-gray-700 text-sm sm:text-base">Badges Earned</h3>
+                            <p class="text-xl sm:text-2xl font-bold text-purple-600" id="badgesEarned">0/15</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Overall Progress Bar -->
+                    <div class="mt-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700">Overall Progress</span>
+                            <span class="text-sm font-medium text-gray-700" id="overallProgress">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="progress-bar h-3 rounded-full" id="progressBar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Section -->
+            <div id="leaderboardSection" class="hidden space-y-6 sm:space-y-8">
+                <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+                        <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-0">🏆 Global Leaderboard</h2>
+                        <div class="flex space-x-2">
+                            <button onclick="filterLeaderboard('points')" id="pointsFilter" class="px-3 py-1 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">Points</button>
+                            <button onclick="filterLeaderboard('level')" id="levelFilter" class="px-3 py-1 text-sm bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Level</button>
+                            <button onclick="filterLeaderboard('streak')" id="streakFilter" class="px-3 py-1 text-sm bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">Streak</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Your Rank -->
+                    <div class="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold text-gray-800 mb-2">Your Ranking</h3>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="text-2xl">👤</div>
+                                <div>
+                                    <div class="font-bold text-gray-800" id="yourRankName"></div>
+                                    <div class="text-sm text-gray-600" id="yourRankStats"></div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-lg font-bold text-orange-600" id="yourRankPosition">#-</div>
+                                <div class="text-sm text-gray-600">Rank</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Leaderboard List -->
+                    <div class="space-y-3" id="leaderboardList">
+                        <!-- Leaderboard entries will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Section -->
+            <div id="statisticsSection" class="hidden space-y-6 sm:space-y-8">
+                <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-6">📈 Your Statistics</h2>
+                    
+                    <!-- Time Stats -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-blue-50 rounded-lg p-4 text-center">
+                            <div class="text-2xl mb-2">⏱️</div>
+                            <div class="text-lg font-bold text-blue-600" id="totalTimeSpent">0h 0m</div>
+                            <div class="text-sm text-gray-600">Time Spent</div>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4 text-center">
+                            <div class="text-2xl mb-2">📅</div>
+                            <div class="text-lg font-bold text-green-600" id="daysSinceJoined">0</div>
+                            <div class="text-sm text-gray-600">Days Active</div>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4 text-center">
+                            <div class="text-2xl mb-2">🔥</div>
+                            <div class="text-lg font-bold text-orange-600" id="longestStreak">0</div>
+                            <div class="text-sm text-gray-600">Best Streak</div>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-4 text-center">
+                            <div class="text-2xl mb-2">📊</div>
+                            <div class="text-lg font-bold text-purple-600" id="averageScore">0%</div>
+                            <div class="text-sm text-gray-600">Avg Score</div>
+                        </div>
+                    </div>
+
+                    <!-- Game Statistics -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-800 mb-4">🎮 Game Performance</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">EcoWordle Best</span>
+                                    <span class="font-semibold" id="wordleBest">0</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">Waste Sorting Best</span>
+                                    <span class="font-semibold" id="wasteBest">0</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">Memory Match Best</span>
+                                    <span class="font-semibold" id="memoryBest">0</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">Puzzle Games Played</span>
+                                    <span class="font-semibold" id="puzzleGames">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-800 mb-4">📚 Learning Progress</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">Modules Completed</span>
+                                    <span class="font-semibold" id="modulesCompleted">0/6</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">Perfect Quiz Scores</span>
+                                    <span class="font-semibold" id="perfectScores">0</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">Achievements Unlocked</span>
+                                    <span class="font-semibold" id="achievementsUnlocked">0/15</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">Current Rank</span>
+                                    <span class="font-semibold" id="currentRank">#-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Games Section -->
+            <div id="gamesSection" class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 sm:mb-6">🎮 Interactive Games</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div class="game-card bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl p-3 sm:p-4 text-center transition-all duration-300 hover:shadow-lg cursor-pointer" onclick="openEcoWordle()">
+                        <div class="text-3xl sm:text-4xl mb-2">🔤</div>
+                        <h3 class="font-bold text-purple-800 text-sm sm:text-base">EcoWordle</h3>
+                        <p class="text-xs sm:text-sm text-purple-600">Guess environmental words</p>
+                        <div class="mt-2 text-xs bg-purple-200 rounded-full px-2 py-1">25 Levels</div>
+                    </div>
+                    
+                    <div class="game-card bg-gradient-to-br from-green-100 to-green-200 rounded-xl p-3 sm:p-4 text-center transition-all duration-300 hover:shadow-lg cursor-pointer" onclick="openEcoPuzzle()">
+                        <div class="text-3xl sm:text-4xl mb-2">🧩</div>
+                        <h3 class="font-bold text-green-800 text-sm sm:text-base">Eco Puzzle</h3>
+                        <p class="text-xs sm:text-sm text-green-600">Solve environmental puzzles</p>
+                        <div class="mt-2 text-xs bg-green-200 rounded-full px-2 py-1">25 Levels</div>
+                    </div>
+                    
+                    <div class="game-card bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl p-3 sm:p-4 text-center transition-all duration-300 hover:shadow-lg cursor-pointer" onclick="openWasteSorting()">
+                        <div class="text-3xl sm:text-4xl mb-2">🗂️</div>
+                        <h3 class="font-bold text-blue-800 text-sm sm:text-base">Waste Sorting</h3>
+                        <p class="text-xs sm:text-sm text-blue-600">Sort recyclable vs non-recyclable</p>
+                        <div class="mt-2 text-xs bg-blue-200 rounded-full px-2 py-1">25 Levels</div>
+                    </div>
+                    
+                    <div class="game-card bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl p-3 sm:p-4 text-center transition-all duration-300 hover:shadow-lg cursor-pointer" onclick="openMemoryMatch()">
+                        <div class="text-3xl sm:text-4xl mb-2">🃏</div>
+                        <h3 class="font-bold text-orange-800 text-sm sm:text-base">Memory Match</h3>
+                        <p class="text-xs sm:text-sm text-orange-600">Match eco-friendly pairs</p>
+                        <div class="mt-2 text-xs bg-orange-200 rounded-full px-2 py-1">25 Levels</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Learning Modules -->
+            <div id="learningSection" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                <!-- Climate Change Module -->
+                <div class="game-card bg-white rounded-2xl shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl">
+                    <div class="text-center mb-4">
+                        <div class="text-4xl sm:text-5xl mb-3">🌡️</div>
+                        <h3 class="text-lg sm:text-xl font-bold text-gray-800">Climate Change</h3>
+                        <p class="text-gray-600 text-xs sm:text-sm">Learn about global warming and its effects</p>
+                    </div>
+                    <div class="space-y-2 sm:space-y-3">
+                        <button onclick="startLesson('climate')" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                            📖 Start Lesson
+                        </button>
+                        <button onclick="startQuiz('climate')" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors text-sm">
+                            🎯 Take Quiz
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recycling Module -->
+                <div class="game-card bg-white rounded-2xl shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl">
+                    <div class="text-center mb-4">
+                        <div class="text-4xl sm:text-5xl mb-3">♻️</div>
+                        <h3 class="text-lg sm:text-xl font-bold text-gray-800">Recycling & Waste</h3>
+                        <p class="text-gray-600 text-xs sm:text-sm">Master the art of waste management</p>
+                    </div>
+                    <div class="space-y-2 sm:space-y-3">
+                        <button onclick="startLesson('recycling')" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                            📖 Start Lesson
+                        </button>
+                        <button onclick="startRecyclingGame()" class="w-full bg-purple-500 text-white py-2 px-4 rounded-lg hover:bg-purple-600 transition-colors text-sm">
+                            🎮 Play Sorting Game
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Renewable Energy Module -->
+                <div class="game-card bg-white rounded-2xl shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl">
+                    <div class="text-center mb-4">
+                        <div class="text-4xl sm:text-5xl mb-3">⚡</div>
+                        <h3 class="text-lg sm:text-xl font-bold text-gray-800">Renewable Energy</h3>
+                        <p class="text-gray-600 text-xs sm:text-sm">Explore sustainable energy sources</p>
+                    </div>
+                    <div class="space-y-2 sm:space-y-3">
+                        <button onclick="startLesson('energy')" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                            📖 Start Lesson
+                        </button>
+                        <button onclick="startQuiz('energy')" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors text-sm">
+                            🎯 Take Quiz
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Biodiversity Module -->
+                <div class="game-card bg-white rounded-2xl shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl">
+                    <div class="text-center mb-4">
+                        <div class="text-4xl sm:text-5xl mb-3">🦋</div>
+                        <h3 class="text-lg sm:text-xl font-bold text-gray-800">Biodiversity</h3>
+                        <p class="text-gray-600 text-xs sm:text-sm">Discover the importance of ecosystems</p>
+                    </div>
+                    <div class="space-y-2 sm:space-y-3">
+                        <button onclick="startLesson('biodiversity')" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                            📖 Start Lesson
+                        </button>
+                        <button onclick="startQuiz('biodiversity')" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors text-sm">
+                            🎯 Take Quiz
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Water Conservation Module -->
+                <div class="game-card bg-white rounded-2xl shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl">
+                    <div class="text-center mb-4">
+                        <div class="text-4xl sm:text-5xl mb-3">💧</div>
+                        <h3 class="text-lg sm:text-xl font-bold text-gray-800">Water Conservation</h3>
+                        <p class="text-gray-600 text-xs sm:text-sm">Learn to protect our water resources</p>
+                    </div>
+                    <div class="space-y-2 sm:space-y-3">
+                        <button onclick="startLesson('water')" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                            📖 Start Lesson
+                        </button>
+                        <button onclick="startQuiz('water')" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors text-sm">
+                            🎯 Take Quiz
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sustainable Living Module -->
+                <div class="game-card bg-white rounded-2xl shadow-lg p-4 sm:p-6 transition-all duration-300 hover:shadow-xl">
+                    <div class="text-center mb-4">
+                        <div class="text-4xl sm:text-5xl mb-3">🌿</div>
+                        <h3 class="text-lg sm:text-xl font-bold text-gray-800">Sustainable Living</h3>
+                        <p class="text-gray-600 text-xs sm:text-sm">Adopt eco-friendly lifestyle choices</p>
+                    </div>
+                    <div class="space-y-2 sm:space-y-3">
+                        <button onclick="startLesson('sustainable')" class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                            📖 Start Lesson
+                        </button>
+                        <button onclick="startQuiz('sustainable')" class="w-full bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition-colors text-sm">
+                            🎯 Take Quiz
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Achievements Section -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Your Achievements</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4" id="achievementsGrid">
+                    <!-- Achievements will be populated by JavaScript -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Lesson Modal -->
+    <div id="lessonModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-4 sm:p-6">
+                <div class="flex justify-between items-center mb-4 sm:mb-6">
+                    <h2 class="text-xl sm:text-3xl font-bold text-gray-800" id="lessonTitle"></h2>
+                    <button onclick="closeLessonModal()" class="text-gray-500 hover:text-gray-700 text-xl sm:text-2xl">&times;</button>
+                </div>
+                <div id="lessonContent" class="prose max-w-none text-sm sm:text-base">
+                    <!-- Lesson content will be populated by JavaScript -->
+                </div>
+                <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-between space-y-2 sm:space-y-0 sm:space-x-4">
+                    <button onclick="closeLessonModal()" class="bg-gray-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-gray-600 transition-colors text-sm sm:text-base">
+                        Close
+                    </button>
+                    <button onclick="completeLessonAndClose()" class="bg-green-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-green-600 transition-colors text-sm sm:text-base">
+                        Mark as Complete ✓
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div id="quizModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
+            <div class="p-4 sm:p-6">
+                <div class="flex justify-between items-center mb-4 sm:mb-6">
+                    <h2 class="text-lg sm:text-2xl font-bold text-gray-800" id="quizTitle"></h2>
+                    <button onclick="closeQuizModal()" class="text-gray-500 hover:text-gray-700 text-xl sm:text-2xl">&times;</button>
+                </div>
+                
+                <div id="quizContent">
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-sm font-medium text-gray-600">Question <span id="currentQuestion">1</span> of <span id="totalQuestions">5</span></span>
+                            <span class="text-sm font-medium text-gray-600">Score: <span id="quizScore">0</span></span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2 mb-6">
+                            <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" id="quizProgress" style="width: 20%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-4" id="questionText"></h3>
+                        <div class="space-y-3" id="quizOptions">
+                            <!-- Quiz options will be populated by JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between">
+                        <button onclick="closeQuizModal()" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                            Exit Quiz
+                        </button>
+                        <button id="nextQuestionBtn" onclick="nextQuestion()" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors hidden">
+                            Next Question →
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Quiz Results -->
+                <div id="quizResults" class="hidden text-center">
+                    <div class="text-6xl mb-4" id="resultEmoji">🎉</div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2" id="resultTitle">Quiz Complete!</h3>
+                    <p class="text-lg text-gray-600 mb-4" id="resultMessage"></p>
+                    <div class="bg-gray-100 rounded-lg p-4 mb-6">
+                        <p class="text-xl font-semibold">Final Score: <span id="finalScore" class="text-green-600">0/5</span></p>
+                    </div>
+                    <button onclick="closeQuizModal()" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                        Continue Learning
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recycling Game Modal -->
+    <div id="recyclingGameModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">♻️ Waste Sorting Challenge</h2>
+                    <button onclick="closeRecyclingGame()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-lg font-semibold">Score: <span id="gameScore" class="text-green-600">0</span></span>
+                        <span class="text-lg font-semibold">Time: <span id="gameTimer" class="text-blue-600">60</span>s</span>
+                    </div>
+                </div>
+                
+                <!-- Recycling Bins -->
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="drop-zone bg-blue-100 border-2 border-dashed border-blue-300 rounded-lg p-4 text-center" data-bin="paper">
+                        <div class="text-3xl mb-2">📄</div>
+                        <h3 class="font-semibold text-blue-700">Paper</h3>
+                    </div>
+                    <div class="drop-zone bg-green-100 border-2 border-dashed border-green-300 rounded-lg p-4 text-center" data-bin="plastic">
+                        <div class="text-3xl mb-2">🥤</div>
+                        <h3 class="font-semibold text-green-700">Plastic</h3>
+                    </div>
+                    <div class="drop-zone bg-yellow-100 border-2 border-dashed border-yellow-300 rounded-lg p-4 text-center" data-bin="metal">
+                        <div class="text-3xl mb-2">🥫</div>
+                        <h3 class="font-semibold text-yellow-700">Metal</h3>
+                    </div>
+                    <div class="drop-zone bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center" data-bin="general">
+                        <div class="text-3xl mb-2">🗑️</div>
+                        <h3 class="font-semibold text-gray-700">General</h3>
+                    </div>
+                </div>
+                
+                <!-- Items to Sort -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h3 class="font-semibold text-gray-700 mb-3">Drag items to the correct bins:</h3>
+                    <div class="flex flex-wrap gap-3" id="itemsToSort">
+                        <!-- Items will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button onclick="closeRecyclingGame()" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                        Exit Game
+                    </button>
+                    <button onclick="startRecyclingGame()" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors">
+                        🔄 New Game
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EcoWordle Game Modal -->
+    <div id="ecoWordleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-purple-800">🔤 EcoWordle</h2>
+                        <p class="text-sm text-gray-600">Level <span id="wordleLevel">1</span> of 25</p>
+                    </div>
+                    <button onclick="closeEcoWordle()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-sm font-medium text-gray-600">Attempts: <span id="wordleAttempts">0</span>/6</span>
+                        <span class="text-sm font-medium text-gray-600">Score: <span id="wordleScore">0</span></span>
+                    </div>
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-purple-600">💡</span>
+                                <h4 class="font-semibold text-purple-800">Hint</h4>
+                            </div>
+                            <button onclick="toggleWordleHint()" class="text-purple-600 hover:text-purple-800 text-sm">Show/Hide</button>
+                        </div>
+                        <div id="wordleHintText" class="text-sm text-purple-700">Hint will appear here</div>
+                    </div>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                        <div class="text-sm text-yellow-800">
+                            <p><strong>How to play:</strong> Guess the eco-word! 🟩 = correct letter & position, 🟨 = correct letter but wrong position, ⬜ = not in word</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-rows-6 gap-2 mb-6" id="wordleGrid">
+                    <!-- Wordle grid will be populated by JavaScript -->
+                </div>
+                
+                <div class="grid grid-cols-10 gap-1 mb-4" id="wordleKeyboard">
+                    <!-- Keyboard will be populated by JavaScript -->
+                </div>
+                
+                <div class="flex justify-between">
+                    <button onclick="closeEcoWordle()" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                        Exit Game
+                    </button>
+                    <button onclick="nextWordleLevel()" id="nextWordleBtn" class="bg-purple-500 text-white px-6 py-3 rounded-lg hover:bg-purple-600 transition-colors hidden">
+                        Next Level →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Eco Puzzle Game Modal -->
+    <div id="ecoPuzzleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-green-800">🧩 Eco Puzzle</h2>
+                        <p class="text-sm text-gray-600">Level <span id="puzzleLevel">1</span> of 25</p>
+                    </div>
+                    <button onclick="closeEcoPuzzle()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-sm font-medium text-gray-600">Moves: <span id="puzzleMoves">0</span>/<span id="puzzleMaxMoves">50</span></span>
+                        <span class="text-sm font-medium text-gray-600">Best: <span id="puzzleBest">-</span></span>
+                    </div>
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-green-600">💡</span>
+                                <h4 class="font-semibold text-green-800">Hint</h4>
+                            </div>
+                            <button onclick="togglePuzzleHint()" class="text-green-600 hover:text-green-800 text-sm">Show/Hide</button>
+                        </div>
+                        <div id="puzzleHint" class="text-sm text-green-700 hidden">
+                            <p><strong>Goal:</strong> Arrange numbers 1-<span id="puzzleGoal">8</span> in order with empty space at bottom-right.</p>
+                            <p><strong>Tip:</strong> Click tiles next to the empty space to move them. Work on corners first!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center mb-6">
+                    <div class="grid gap-1 bg-gray-300 p-2 rounded-lg" id="puzzleGrid">
+                        <!-- Puzzle grid will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button onclick="closeEcoPuzzle()" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                        Exit Game
+                    </button>
+                    <div class="space-x-2">
+                        <button onclick="shufflePuzzle()" class="bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                            🔄 Shuffle
+                        </button>
+                        <button onclick="nextPuzzleLevel()" id="nextPuzzleBtn" class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 transition-colors hidden">
+                            Next Level →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Waste Sorting Game Modal -->
+    <div id="wasteSortingModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-blue-800">🗂️ Waste Sorting Challenge</h2>
+                        <p class="text-sm text-gray-600">Level <span id="wasteSortingLevel">1</span> of 25</p>
+                    </div>
+                    <button onclick="closeWasteSorting()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-lg font-semibold">Score: <span id="wasteSortingScore" class="text-green-600">0</span></span>
+                        <span class="text-lg font-semibold">Time: <span id="wasteSortingTimer" class="text-blue-600">60</span>s</span>
+                    </div>
+                </div>
+                
+                <!-- Sorting Bins -->
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div class="waste-drop-zone bg-green-100 border-2 border-dashed border-green-300 rounded-lg p-6 text-center min-h-32" data-bin="biodegradable">
+                        <div class="text-4xl mb-2">🌱</div>
+                        <h3 class="font-semibold text-green-700 text-lg">Biodegradable</h3>
+                        <p class="text-sm text-green-600">Items that decompose naturally</p>
+                    </div>
+                    <div class="waste-drop-zone bg-red-100 border-2 border-dashed border-red-300 rounded-lg p-6 text-center min-h-32" data-bin="non-biodegradable">
+                        <div class="text-4xl mb-2">🚫</div>
+                        <h3 class="font-semibold text-red-700 text-lg">Non-Biodegradable</h3>
+                        <p class="text-sm text-red-600">Items that don't decompose naturally</p>
+                    </div>
+                </div>
+                
+                <!-- Hint System -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <span class="text-blue-600">💡</span>
+                        <h4 class="font-semibold text-blue-800">Hint</h4>
+                        <button onclick="toggleWasteHint()" class="text-blue-600 hover:text-blue-800 text-sm">Show/Hide</button>
+                    </div>
+                    <div id="wasteHint" class="text-sm text-blue-700 hidden">
+                        <p><strong>Biodegradable:</strong> Food scraps, paper, wood, natural materials that break down in nature.</p>
+                        <p><strong>Non-Biodegradable:</strong> Plastic, metal, glass, synthetic materials that don't break down easily.</p>
+                    </div>
+                </div>
+                
+                <!-- Items to Sort -->
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <h3 class="font-semibold text-gray-700 mb-3">Drag items to the correct bins:</h3>
+                    <div class="flex flex-wrap gap-3" id="wasteItemsToSort">
+                        <!-- Items will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button onclick="closeWasteSorting()" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                        Exit Game
+                    </button>
+                    <button onclick="nextWasteSortingLevel()" id="nextWasteSortingBtn" class="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors hidden">
+                        Next Level →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Memory Match Game Modal -->
+    <div id="memoryMatchModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-orange-800">🃏 Memory Match</h2>
+                        <p class="text-sm text-gray-600">Level <span id="memoryLevel">1</span> of 25</p>
+                    </div>
+                    <button onclick="closeMemoryMatch()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-sm font-medium text-gray-600">Matches: <span id="memoryMatches">0</span>/<span id="memoryTotal">8</span></span>
+                        <span class="text-sm font-medium text-gray-600">Moves: <span id="memoryMoves">0</span>/<span id="memoryMaxMoves">30</span></span>
+                    </div>
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-orange-600">💡</span>
+                                <h4 class="font-semibold text-orange-800">Hint</h4>
+                            </div>
+                            <button onclick="toggleMemoryHint()" class="text-orange-600 hover:text-orange-800 text-sm">Show/Hide</button>
+                        </div>
+                        <div id="memoryHint" class="text-sm text-orange-700 hidden">
+                            <p><strong>Goal:</strong> Find all matching pairs of eco-themed cards.</p>
+                            <p><strong>Tip:</strong> Remember card positions! Start from corners and work systematically.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center mb-6">
+                    <div class="grid gap-2" id="memoryGrid">
+                        <!-- Memory grid will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button onclick="closeMemoryMatch()" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors">
+                        Exit Game
+                    </button>
+                    <button onclick="nextMemoryLevel()" id="nextMemoryBtn" class="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors hidden">
+                        Next Level →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Modal -->
+    <div id="profileModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Your Profile</h2>
+                    <button onclick="closeProfile()" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                </div>
+                
+                <div class="text-center mb-6">
+                    <div class="text-6xl mb-4" id="profileAvatar">👤</div>
+                    <h3 class="text-xl font-bold text-gray-800" id="profileName"></h3>
+                    <p class="text-gray-600" id="profileEmail"></p>
+                    <p class="text-gray-600" id="profileInstitution"></p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-6 mb-6">
+                    <div class="text-center bg-yellow-50 rounded-lg p-4">
+                        <div class="text-3xl mb-2">⭐</div>
+                        <h4 class="font-semibold text-gray-700">Total Points</h4>
+                        <p class="text-2xl font-bold text-yellow-600" id="profilePoints">0</p>
+                    </div>
+                    <div class="text-center bg-green-50 rounded-lg p-4">
+                        <div class="text-3xl mb-2">🏆</div>
+                        <h4 class="font-semibold text-gray-700">Current Level</h4>
+                        <p class="text-2xl font-bold text-green-600" id="profileLevel">1</p>
+                    </div>
+                </div>
+                
+                <button onclick="closeProfile()" class="w-full bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition-colors">
+                    Close Profile
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            user: {},
+            points: 0,
+            level: 1,
+            completedLessons: [],
+            completedQuizzes: [],
+            achievements: [],
+            currentQuiz: null,
+            currentQuizIndex: 0,
+            quizScore: 0,
+            recyclingGameActive: false,
+            gameScore: 0,
+            gameTimer: 60,
+            // Streak and engagement tracking
+            streak: {
+                current: 0,
+                longest: 0,
+                lastVisit: null,
+                totalDays: 0
+            },
+            stats: {
+                totalTimeSpent: 0,
+                gamesPlayed: 0,
+                lessonsCompleted: 0,
+                quizzesCompleted: 0,
+                averageScore: 0,
+                joinDate: null,
+                lastActive: null
+            },
+            // New game states
+            ecoWordle: {
+                level: 1,
+                currentWord: '',
+                attempts: 0,
+                guesses: [],
+                gameActive: false,
+                score: 0,
+                gamesPlayed: 0,
+                bestScore: 0
+            },
+            ecoPuzzle: {
+                level: 1,
+                moves: 0,
+                bestScores: {},
+                gameActive: false,
+                grid: [],
+                gamesPlayed: 0
+            },
+            wasteSorting: {
+                level: 1,
+                score: 0,
+                timer: 60,
+                gameActive: false,
+                gamesPlayed: 0,
+                bestScore: 0
+            },
+            memoryMatch: {
+                level: 1,
+                matches: 0,
+                moves: 0,
+                gameActive: false,
+                flippedCards: [],
+                matchedPairs: [],
+                gamesPlayed: 0,
+                bestScore: 0
+            }
+        };
+
+        // Global leaderboard (simulated - in real app would be server-side)
+        let globalLeaderboard = JSON.parse(localStorage.getItem('ecoquest-leaderboard')) || [];
+
+        // Lesson Content
+        const lessons = {
+            climate: {
+                title: "🌡️ Climate Change Fundamentals",
+                content: `
+                    <div class="space-y-6">
+                        <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded">
+                            <h3 class="text-lg font-semibold text-red-800 mb-2">What is Climate Change?</h3>
+                            <p class="text-red-700">Climate change refers to long-term shifts in global temperatures and weather patterns. While climate variations are natural, human activities have been the main driver since the 1800s.</p>
+                        </div>
+                        
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+                            <h3 class="text-lg font-semibold text-blue-800 mb-2">The Greenhouse Effect</h3>
+                            <p class="text-blue-700">Greenhouse gases trap heat in Earth's atmosphere. The main greenhouse gases include carbon dioxide (CO₂), methane (CH₄), and nitrous oxide (N₂O).</p>
+                        </div>
+                        
+                        <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                            <h3 class="text-lg font-semibold text-green-800 mb-2">What Can You Do?</h3>
+                            <ul class="text-green-700 list-disc list-inside space-y-1">
+                                <li>Use energy-efficient appliances</li>
+                                <li>Walk, bike, or use public transportation</li>
+                                <li>Reduce, reuse, and recycle</li>
+                                <li>Support renewable energy</li>
+                                <li>Plant trees and support reforestation</li>
+                            </ul>
+                        </div>
+                    </div>
+                `
+            },
+            recycling: {
+                title: "♻️ Recycling and Waste Management",
+                content: `
+                    <div class="space-y-6">
+                        <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                            <h3 class="text-lg font-semibold text-green-800 mb-2">The 3 R's: Reduce, Reuse, Recycle</h3>
+                            <p class="text-green-700">This hierarchy helps minimize waste and environmental impact. Reducing consumption is most effective, followed by reusing items, then recycling.</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-blue-50 p-4 rounded">
+                                <h4 class="font-semibold text-blue-800 mb-2">♻️ Recyclable Materials</h4>
+                                <ul class="text-blue-700 text-sm space-y-1">
+                                    <li>• Paper and cardboard</li>
+                                    <li>• Plastic bottles and containers</li>
+                                    <li>• Glass bottles and jars</li>
+                                    <li>• Aluminum cans</li>
+                                    <li>• Steel cans</li>
+                                </ul>
+                            </div>
+                            <div class="bg-red-50 p-4 rounded">
+                                <h4 class="font-semibold text-red-800 mb-2">🚫 Non-Recyclable Items</h4>
+                                <ul class="text-red-700 text-sm space-y-1">
+                                    <li>• Food waste</li>
+                                    <li>• Plastic bags</li>
+                                    <li>• Styrofoam</li>
+                                    <li>• Broken glass</li>
+                                    <li>• Electronics (need special disposal)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            energy: {
+                title: "⚡ Renewable Energy Sources",
+                content: `
+                    <div class="space-y-6">
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+                            <h3 class="text-lg font-semibold text-yellow-800 mb-2">What is Renewable Energy?</h3>
+                            <p class="text-yellow-700">Renewable energy comes from natural sources that are constantly replenished, like sunlight, wind, and water. Unlike fossil fuels, they don't run out!</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-orange-50 p-4 rounded">
+                                <h4 class="font-semibold text-orange-800 mb-2">☀️ Solar Energy</h4>
+                                <p class="text-orange-700 text-sm">Converts sunlight into electricity using solar panels. Clean, abundant, and increasingly affordable.</p>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded">
+                                <h4 class="font-semibold text-blue-800 mb-2">💨 Wind Energy</h4>
+                                <p class="text-blue-700 text-sm">Uses wind turbines to generate electricity. One of the fastest-growing energy sources worldwide.</p>
+                            </div>
+                            <div class="bg-cyan-50 p-4 rounded">
+                                <h4 class="font-semibold text-cyan-800 mb-2">💧 Hydroelectric</h4>
+                                <p class="text-cyan-700 text-sm">Generates power from flowing water. Reliable and can provide energy storage through pumped storage.</p>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded">
+                                <h4 class="font-semibold text-green-800 mb-2">🌱 Biomass</h4>
+                                <p class="text-green-700 text-sm">Energy from organic materials like wood, crops, and waste. Carbon-neutral when managed sustainably.</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            biodiversity: {
+                title: "🦋 Biodiversity and Ecosystems",
+                content: `
+                    <div class="space-y-6">
+                        <div class="bg-purple-50 border-l-4 border-purple-400 p-4 rounded">
+                            <h3 class="text-lg font-semibold text-purple-800 mb-2">What is Biodiversity?</h3>
+                            <p class="text-purple-700">Biodiversity refers to the variety of life on Earth - from genes to species to ecosystems. It's essential for ecosystem stability and human well-being.</p>
+                        </div>
+                        
+                        <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                            <h3 class="text-lg font-semibold text-green-800 mb-2">Why is Biodiversity Important?</h3>
+                            <ul class="text-green-700 list-disc list-inside space-y-1">
+                                <li>Provides food, medicine, and materials</li>
+                                <li>Maintains ecosystem services (pollination, water purification)</li>
+                                <li>Helps ecosystems adapt to changes</li>
+                                <li>Supports climate regulation</li>
+                                <li>Has intrinsic value - every species matters!</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded">
+                            <h3 class="text-lg font-semibold text-red-800 mb-2">Threats to Biodiversity</h3>
+                            <ul class="text-red-700 list-disc list-inside space-y-1">
+                                <li>Habitat destruction and fragmentation</li>
+                                <li>Climate change</li>
+                                <li>Pollution</li>
+                                <li>Overexploitation of species</li>
+                                <li>Invasive species</li>
+                            </ul>
+                        </div>
+                    </div>
+                `
+            },
+            water: {
+                title: "💧 Water Conservation",
+                content: `
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+                            <h3 class="text-lg font-semibold text-blue-800 mb-2">Why Conserve Water?</h3>
+                            <p class="text-blue-700">Only 3% of Earth's water is freshwater, and much of it is frozen or underground. Clean, accessible water is becoming increasingly scarce due to population growth and climate change.</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-cyan-50 p-4 rounded">
+                                <h4 class="font-semibold text-cyan-800 mb-2">🏠 At Home</h4>
+                                <ul class="text-cyan-700 text-sm space-y-1">
+                                    <li>• Fix leaky faucets and pipes</li>
+                                    <li>• Take shorter showers</li>
+                                    <li>• Use water-efficient appliances</li>
+                                    <li>• Collect rainwater for plants</li>
+                                    <li>• Turn off tap while brushing teeth</li>
+                                </ul>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded">
+                                <h4 class="font-semibold text-green-800 mb-2">🌱 In the Garden</h4>
+                                <ul class="text-green-700 text-sm space-y-1">
+                                    <li>• Water plants early morning or evening</li>
+                                    <li>• Use mulch to retain moisture</li>
+                                    <li>• Choose drought-resistant plants</li>
+                                    <li>• Install drip irrigation systems</li>
+                                    <li>• Use greywater for irrigation</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            sustainable: {
+                title: "🌿 Sustainable Living",
+                content: `
+                    <div class="space-y-6">
+                        <div class="bg-green-50 border-l-4 border-green-400 p-4 rounded">
+                            <h3 class="text-lg font-semibold text-green-800 mb-2">What is Sustainable Living?</h3>
+                            <p class="text-green-700">Sustainable living means making choices that meet our needs without compromising the ability of future generations to meet theirs. It's about living in harmony with the planet.</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-yellow-50 p-4 rounded">
+                                <h4 class="font-semibold text-yellow-800 mb-2">🛒 Conscious Consumption</h4>
+                                <ul class="text-yellow-700 text-sm space-y-1">
+                                    <li>• Buy only what you need</li>
+                                    <li>• Choose quality over quantity</li>
+                                    <li>• Support local businesses</li>
+                                    <li>• Buy second-hand when possible</li>
+                                </ul>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded">
+                                <h4 class="font-semibold text-blue-800 mb-2">🚗 Transportation</h4>
+                                <ul class="text-blue-700 text-sm space-y-1">
+                                    <li>• Walk or bike for short trips</li>
+                                    <li>• Use public transportation</li>
+                                    <li>• Carpool or rideshare</li>
+                                    <li>• Consider electric vehicles</li>
+                                </ul>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded">
+                                <h4 class="font-semibold text-purple-800 mb-2">🍽️ Food Choices</h4>
+                                <ul class="text-purple-700 text-sm space-y-1">
+                                    <li>• Eat more plant-based meals</li>
+                                    <li>• Buy local and seasonal produce</li>
+                                    <li>• Reduce food waste</li>
+                                    <li>• Grow your own herbs/vegetables</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        // Quiz Questions
+        const quizzes = {
+            climate: [
+                {
+                    question: "What is the main cause of current climate change?",
+                    options: ["Natural climate cycles", "Human activities", "Solar radiation changes", "Volcanic eruptions"],
+                    correct: 1
+                },
+                {
+                    question: "Which gas is the most significant greenhouse gas?",
+                    options: ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"],
+                    correct: 2
+                },
+                {
+                    question: "What can individuals do to help combat climate change?",
+                    options: ["Use more fossil fuels", "Reduce energy consumption", "Increase waste production", "Drive more often"],
+                    correct: 1
+                },
+                {
+                    question: "What is the greenhouse effect?",
+                    options: ["Cooling of Earth's surface", "Trapping of heat in the atmosphere", "Reflection of sunlight", "Ocean currents"],
+                    correct: 1
+                },
+                {
+                    question: "Which renewable energy source is most abundant?",
+                    options: ["Wind", "Solar", "Hydroelectric", "Geothermal"],
+                    correct: 1
+                }
+            ],
+            energy: [
+                {
+                    question: "Which is NOT a renewable energy source?",
+                    options: ["Solar", "Wind", "Coal", "Hydroelectric"],
+                    correct: 2
+                },
+                {
+                    question: "What converts sunlight directly into electricity?",
+                    options: ["Wind turbines", "Solar panels", "Hydroelectric dams", "Biomass plants"],
+                    correct: 1
+                },
+                {
+                    question: "Which country leads in wind energy production?",
+                    options: ["USA", "Germany", "China", "Denmark"],
+                    correct: 2
+                },
+                {
+                    question: "What is the main advantage of renewable energy?",
+                    options: ["It's expensive", "It pollutes the environment", "It's sustainable and clean", "It's unreliable"],
+                    correct: 2
+                },
+                {
+                    question: "Biomass energy comes from:",
+                    options: ["Fossil fuels", "Nuclear reactions", "Organic materials", "Minerals"],
+                    correct: 2
+                }
+            ],
+            biodiversity: [
+                {
+                    question: "What does biodiversity refer to?",
+                    options: ["Only animal species", "Only plant species", "Variety of all life forms", "Only marine life"],
+                    correct: 2
+                },
+                {
+                    question: "Which is the greatest threat to biodiversity?",
+                    options: ["Natural disasters", "Habitat destruction", "Disease", "Predation"],
+                    correct: 1
+                },
+                {
+                    question: "Why are pollinators important for biodiversity?",
+                    options: ["They eat pests", "They help plants reproduce", "They clean the air", "They provide food"],
+                    correct: 1
+                },
+                {
+                    question: "What is an ecosystem?",
+                    options: ["Only plants in an area", "Only animals in an area", "Living and non-living things interacting", "Just the climate"],
+                    correct: 2
+                },
+                {
+                    question: "How can we protect biodiversity?",
+                    options: ["Create more cities", "Protect natural habitats", "Use more pesticides", "Hunt more animals"],
+                    correct: 1
+                }
+            ],
+            water: [
+                {
+                    question: "What percentage of Earth's water is freshwater?",
+                    options: ["10%", "25%", "3%", "50%"],
+                    correct: 2
+                },
+                {
+                    question: "Which uses the most water globally?",
+                    options: ["Domestic use", "Industry", "Agriculture", "Recreation"],
+                    correct: 2
+                },
+                {
+                    question: "What is greywater?",
+                    options: ["Dirty rainwater", "Used water from sinks and showers", "Ocean water", "Contaminated groundwater"],
+                    correct: 1
+                },
+                {
+                    question: "How can you conserve water at home?",
+                    options: ["Take longer showers", "Fix leaky faucets", "Leave taps running", "Water plants at noon"],
+                    correct: 1
+                },
+                {
+                    question: "What is water pollution mainly caused by?",
+                    options: ["Natural processes only", "Human activities", "Animal waste only", "Plant decay only"],
+                    correct: 1
+                }
+            ],
+            sustainable: [
+                {
+                    question: "What does sustainable living mean?",
+                    options: ["Using as much as possible", "Meeting needs without harming future generations", "Living in cities only", "Avoiding all technology"],
+                    correct: 1
+                },
+                {
+                    question: "Which is an example of sustainable transportation?",
+                    options: ["Driving alone daily", "Flying frequently", "Cycling to work", "Using old, inefficient cars"],
+                    correct: 2
+                },
+                {
+                    question: "What is the most sustainable diet choice?",
+                    options: ["Eating only meat", "Eating more plant-based foods", "Eating only processed foods", "Eating food from far away"],
+                    correct: 1
+                },
+                {
+                    question: "How can you practice sustainable consumption?",
+                    options: ["Buy everything new", "Buy only what you need", "Throw away items quickly", "Ignore product origins"],
+                    correct: 1
+                },
+                {
+                    question: "What is the circular economy?",
+                    options: ["Linear production model", "Reuse and recycle materials continuously", "Throwing everything away", "Using only new materials"],
+                    correct: 1
+                }
+            ]
+        };
+
+        // Recycling Game Items
+        const recyclingItems = [
+            { name: "Newspaper", emoji: "📰", type: "paper" },
+            { name: "Plastic Bottle", emoji: "🍼", type: "plastic" },
+            { name: "Aluminum Can", emoji: "🥤", type: "metal" },
+            { name: "Banana Peel", emoji: "🍌", type: "general" },
+            { name: "Cardboard Box", emoji: "📦", type: "paper" },
+            { name: "Glass Jar", emoji: "🫙", type: "metal" },
+            { name: "Plastic Bag", emoji: "🛍️", type: "general" },
+            { name: "Magazine", emoji: "📖", type: "paper" },
+            { name: "Yogurt Container", emoji: "🥛", type: "plastic" },
+            { name: "Apple Core", emoji: "🍎", type: "general" }
+        ];
+
+        // EcoWordle Words (25 levels)
+        const ecoWordleWords = [
+            { word: "EARTH", hint: "Our home planet" },
+            { word: "GREEN", hint: "Color associated with nature" },
+            { word: "SOLAR", hint: "Energy from the sun" },
+            { word: "WATER", hint: "Essential liquid for life" },
+            { word: "PLANT", hint: "Living organism that photosynthesizes" },
+            { word: "OCEAN", hint: "Large body of saltwater" },
+            { word: "FOREST", hint: "Large area covered with trees" },
+            { word: "RECYCLE", hint: "Process materials for reuse" },
+            { word: "CARBON", hint: "Element symbol C, found in CO2" },
+            { word: "NATURE", hint: "The natural world" },
+            { word: "ENERGY", hint: "Power to do work" },
+            { word: "CLIMATE", hint: "Long-term weather patterns" },
+            { word: "OXYGEN", hint: "Gas we breathe, O2" },
+            { word: "BIOME", hint: "Large ecological area" },
+            { word: "HABITAT", hint: "Natural home of organisms" },
+            { word: "SPECIES", hint: "Group of similar organisms" },
+            { word: "ECOLOGY", hint: "Study of ecosystems" },
+            { word: "SUSTAIN", hint: "Maintain without depleting" },
+            { word: "ORGANIC", hint: "Natural, without chemicals" },
+            { word: "GLACIER", hint: "Large mass of ice" },
+            { word: "TUNDRA", hint: "Cold, treeless biome" },
+            { word: "SAVANNA", hint: "Grassland with scattered trees" },
+            { word: "WETLAND", hint: "Area saturated with water" },
+            { word: "PRAIRIE", hint: "Large grassland area" },
+            { word: "BIODIVERSITY", hint: "Variety of life forms" }
+        ];
+
+        // Waste Sorting Items (Biodegradable vs Non-Biodegradable)
+        const wasteSortingItems = [
+            // Biodegradable items
+            { name: "Apple Core", emoji: "🍎", type: "biodegradable" },
+            { name: "Banana Peel", emoji: "🍌", type: "biodegradable" },
+            { name: "Orange Peel", emoji: "🍊", type: "biodegradable" },
+            { name: "Vegetable Scraps", emoji: "🥕", type: "biodegradable" },
+            { name: "Eggshells", emoji: "🥚", type: "biodegradable" },
+            { name: "Coffee Grounds", emoji: "☕", type: "biodegradable" },
+            { name: "Tea Bags", emoji: "🫖", type: "biodegradable" },
+            { name: "Bread Crumbs", emoji: "🍞", type: "biodegradable" },
+            { name: "Paper Napkin", emoji: "🧻", type: "biodegradable" },
+            { name: "Cardboard", emoji: "📦", type: "biodegradable" },
+            { name: "Wood Chips", emoji: "🪵", type: "biodegradable" },
+            { name: "Cotton Cloth", emoji: "🧽", type: "biodegradable" },
+            { name: "Fallen Leaves", emoji: "🍃", type: "biodegradable" },
+            { name: "Grass Clippings", emoji: "🌱", type: "biodegradable" },
+            { name: "Fish Bones", emoji: "🐟", type: "biodegradable" },
+            
+            // Non-biodegradable items
+            { name: "Plastic Bottle", emoji: "🍼", type: "non-biodegradable" },
+            { name: "Aluminum Can", emoji: "🥤", type: "non-biodegradable" },
+            { name: "Glass Jar", emoji: "🫙", type: "non-biodegradable" },
+            { name: "Plastic Bag", emoji: "🛍️", type: "non-biodegradable" },
+            { name: "Styrofoam Cup", emoji: "🥤", type: "non-biodegradable" },
+            { name: "Metal Spoon", emoji: "🥄", type: "non-biodegradable" },
+            { name: "Rubber Glove", emoji: "🧤", type: "non-biodegradable" },
+            { name: "Ceramic Plate", emoji: "🍽️", type: "non-biodegradable" },
+            { name: "Light Bulb", emoji: "💡", type: "non-biodegradable" },
+            { name: "Battery", emoji: "🔋", type: "non-biodegradable" },
+            { name: "Plastic Toy", emoji: "🧸", type: "non-biodegradable" },
+            { name: "CD/DVD", emoji: "💿", type: "non-biodegradable" },
+            { name: "Synthetic Fabric", emoji: "👕", type: "non-biodegradable" },
+            { name: "Foam Packaging", emoji: "📦", type: "non-biodegradable" },
+            { name: "Electronic Device", emoji: "📱", type: "non-biodegradable" }
+        ];
+
+        // Memory Match Pairs (Eco-themed)
+        const memoryMatchPairs = [
+            { id: 1, emoji: "🌱", name: "Seedling" },
+            { id: 2, emoji: "🌳", name: "Tree" },
+            { id: 3, emoji: "♻️", name: "Recycle" },
+            { id: 4, emoji: "🌍", name: "Earth" },
+            { id: 5, emoji: "☀️", name: "Sun" },
+            { id: 6, emoji: "💧", name: "Water" },
+            { id: 7, emoji: "🦋", name: "Butterfly" },
+            { id: 8, emoji: "🐝", name: "Bee" },
+            { id: 9, emoji: "🌸", name: "Flower" },
+            { id: 10, emoji: "🍃", name: "Leaf" },
+            { id: 11, emoji: "🌊", name: "Wave" },
+            { id: 12, emoji: "⚡", name: "Energy" },
+            { id: 13, emoji: "🌿", name: "Herb" },
+            { id: 14, emoji: "🏔️", name: "Mountain" },
+            { id: 15, emoji: "🌙", name: "Moon" },
+            { id: 16, emoji: "⭐", name: "Star" },
+            { id: 17, emoji: "🌈", name: "Rainbow" },
+            { id: 18, emoji: "🌺", name: "Hibiscus" },
+            { id: 19, emoji: "🦅", name: "Eagle" },
+            { id: 20, emoji: "🐢", name: "Turtle" },
+            { id: 21, emoji: "🌵", name: "Cactus" },
+            { id: 22, emoji: "🍄", name: "Mushroom" },
+            { id: 23, emoji: "🦆", name: "Duck" },
+            { id: 24, emoji: "🐠", name: "Fish" },
+            { id: 25, emoji: "🌾", name: "Wheat" }
+        ];
+
+        // Achievements
+        const achievements = [
+            { id: "first-lesson", name: "First Steps", emoji: "👶", description: "Complete your first lesson", unlocked: false },
+            { id: "quiz-master", name: "Quiz Master", emoji: "🧠", description: "Pass your first quiz", unlocked: false },
+            { id: "recycling-pro", name: "Recycling Pro", emoji: "♻️", description: "Score 100+ in recycling game", unlocked: false },
+            { id: "climate-expert", name: "Climate Expert", emoji: "🌡️", description: "Complete climate change module", unlocked: false },
+            { id: "energy-saver", name: "Energy Saver", emoji: "⚡", description: "Complete renewable energy module", unlocked: false },
+            { id: "water-guardian", name: "Water Guardian", emoji: "💧", description: "Complete water conservation module", unlocked: false },
+            { id: "eco-warrior", name: "Eco Warrior", emoji: "🌿", description: "Complete all modules", unlocked: false },
+            { id: "point-collector", name: "Point Collector", emoji: "⭐", description: "Earn 500 points", unlocked: false },
+            { id: "level-up", name: "Level Up", emoji: "🚀", description: "Reach level 5", unlocked: false },
+            { id: "perfect-score", name: "Perfect Score", emoji: "💯", description: "Get 100% on any quiz", unlocked: false },
+            { id: "speed-demon", name: "Speed Demon", emoji: "⚡", description: "Complete recycling game in under 30s", unlocked: false },
+            { id: "knowledge-seeker", name: "Knowledge Seeker", emoji: "📚", description: "Complete 5 lessons", unlocked: false },
+            { id: "quiz-champion", name: "Quiz Champion", emoji: "🏆", description: "Pass 5 quizzes", unlocked: false },
+            { id: "eco-student", name: "Eco Student", emoji: "🎓", description: "Spend 1 hour learning", unlocked: false },
+            { id: "green-thumb", name: "Green Thumb", emoji: "🌱", description: "Complete biodiversity module", unlocked: false }
+        ];
+
+        // Initialize the application
+        function init() {
+            // Load saved game state
+            const saved = localStorage.getItem('ecoquest-save');
+            if (saved) {
+                const savedState = JSON.parse(saved);
+                gameState = { ...gameState, ...savedState };
+            }
+            
+            // Initialize user stats if first time
+            if (!gameState.stats.joinDate) {
+                gameState.stats.joinDate = new Date().toISOString();
+            }
+            
+            // Check and update streak
+            updateStreak();
+            
+            // Set up event listeners
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Initialize achievements
+            gameState.achievements = achievements.map(achievement => ({
+                ...achievement,
+                unlocked: gameState.achievements?.find(a => a.id === achievement.id)?.unlocked || false
+            }));
+            
+            updateAchievementsDisplay();
+            
+            // Start session timer
+            startSessionTimer();
+        }
+
+        // Navigation Functions
+        function toggleMenu() {
+            const menu = document.getElementById('navMenu');
+            menu.classList.toggle('hidden');
+        }
+
+        function closeMenu() {
+            document.getElementById('navMenu').classList.add('hidden');
+        }
+
+        function showDashboard() {
+            hideAllSections();
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            document.getElementById('gamesSection').classList.remove('hidden');
+            document.getElementById('learningSection').classList.remove('hidden');
+            updateDashboard();
+        }
+
+        function showLeaderboard() {
+            hideAllSections();
+            document.getElementById('leaderboardSection').classList.remove('hidden');
+            updateLeaderboard();
+        }
+
+        function showStats() {
+            hideAllSections();
+            document.getElementById('statisticsSection').classList.remove('hidden');
+            updateStatistics();
+        }
+
+        function hideAllSections() {
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('gamesSection').classList.add('hidden');
+            document.getElementById('learningSection').classList.add('hidden');
+            document.getElementById('leaderboardSection').classList.add('hidden');
+            document.getElementById('statisticsSection').classList.add('hidden');
+        }
+
+        // Streak System
+        function updateStreak() {
+            const today = new Date().toDateString();
+            const lastVisit = gameState.streak.lastVisit;
+            
+            if (!lastVisit) {
+                // First visit
+                gameState.streak.current = 1;
+                gameState.streak.lastVisit = today;
+                gameState.streak.totalDays = 1;
+                addPoints(10); // Bonus for first visit
+                showNotification('Welcome! +10 streak bonus points! 🔥');
+            } else if (lastVisit !== today) {
+                const lastVisitDate = new Date(lastVisit);
+                const todayDate = new Date(today);
+                const daysDiff = Math.floor((todayDate - lastVisitDate) / (1000 * 60 * 60 * 24));
+                
+                if (daysDiff === 1) {
+                    // Consecutive day
+                    gameState.streak.current++;
+                    gameState.streak.totalDays++;
+                    const streakBonus = Math.min(gameState.streak.current * 5, 50);
+                    addPoints(streakBonus);
+                    showNotification(`${gameState.streak.current} day streak! +${streakBonus} points! 🔥`);
+                } else if (daysDiff > 1) {
+                    // Streak broken
+                    gameState.streak.current = 1;
+                    gameState.streak.totalDays++;
+                    addPoints(5);
+                    showNotification('Streak reset, but you\'re back! +5 points! 💪');
+                }
+                
+                // Update longest streak
+                if (gameState.streak.current > gameState.streak.longest) {
+                    gameState.streak.longest = gameState.streak.current;
+                }
+                
+                gameState.streak.lastVisit = today;
+            }
+            
+            // Update UI
+            document.getElementById('userStreak').textContent = gameState.streak.current;
+            saveGame();
+        }
+
+        // Session Timer
+        let sessionStartTime = Date.now();
+        let sessionTimer;
+
+        function startSessionTimer() {
+            sessionStartTime = Date.now();
+            sessionTimer = setInterval(() => {
+                const sessionTime = Math.floor((Date.now() - sessionStartTime) / 1000);
+                gameState.stats.totalTimeSpent += 1;
+                gameState.stats.lastActive = new Date().toISOString();
+            }, 1000);
+        }
+
+        // Dashboard Updates
+        function updateDashboard() {
+            document.getElementById('dashboardUserName').textContent = gameState.user.name || 'Student';
+            document.getElementById('dashboardStreak').textContent = gameState.streak.current;
+            document.getElementById('dashboardPoints').textContent = gameState.points;
+            document.getElementById('dashboardLevel').textContent = gameState.level;
+            
+            const totalGames = gameState.ecoWordle.gamesPlayed + gameState.ecoPuzzle.gamesPlayed + 
+                             gameState.wasteSorting.gamesPlayed + gameState.memoryMatch.gamesPlayed;
+            document.getElementById('dashboardGamesPlayed').textContent = totalGames;
+            document.getElementById('dashboardLessonsCompleted').textContent = gameState.completedLessons.length;
+        }
+
+        // Leaderboard Functions
+        function updateLeaderboard() {
+            // Update user's entry in global leaderboard
+            updateUserInLeaderboard();
+            
+            // Display leaderboard
+            displayLeaderboard('points');
+        }
+
+        function updateUserInLeaderboard() {
+            const userEntry = {
+                name: gameState.user.name,
+                email: gameState.user.email,
+                points: gameState.points,
+                level: gameState.level,
+                streak: gameState.streak.current,
+                achievements: gameState.achievements.filter(a => a.unlocked).length,
+                lastActive: new Date().toISOString()
+            };
+            
+            // Remove existing entry and add updated one
+            globalLeaderboard = globalLeaderboard.filter(entry => entry.email !== gameState.user.email);
+            globalLeaderboard.push(userEntry);
+            
+            // Save to localStorage
+            localStorage.setItem('ecoquest-leaderboard', JSON.stringify(globalLeaderboard));
+        }
+
+        function filterLeaderboard(type) {
+            // Update filter buttons
+            document.querySelectorAll('[id$="Filter"]').forEach(btn => {
+                btn.className = 'px-3 py-1 text-sm bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors';
+            });
+            document.getElementById(type + 'Filter').className = 'px-3 py-1 text-sm bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors';
+            
+            displayLeaderboard(type);
+        }
+
+        function displayLeaderboard(sortBy) {
+            let sortedLeaderboard = [...globalLeaderboard];
+            
+            // Sort based on criteria
+            switch(sortBy) {
+                case 'points':
+                    sortedLeaderboard.sort((a, b) => b.points - a.points);
+                    break;
+                case 'level':
+                    sortedLeaderboard.sort((a, b) => b.level - a.level);
+                    break;
+                case 'streak':
+                    sortedLeaderboard.sort((a, b) => b.streak - a.streak);
+                    break;
+            }
+            
+            // Find user's rank
+            const userRank = sortedLeaderboard.findIndex(entry => entry.email === gameState.user.email) + 1;
+            
+            // Update user's rank display
+            document.getElementById('yourRankName').textContent = gameState.user.name;
+            document.getElementById('yourRankStats').textContent = `${gameState.points} points • Level ${gameState.level} • ${gameState.streak.current} day streak`;
+            document.getElementById('yourRankPosition').textContent = userRank > 0 ? `#${userRank}` : '#-';
+            
+            // Display top 10
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = '';
+            
+            sortedLeaderboard.slice(0, 10).forEach((entry, index) => {
+                const isCurrentUser = entry.email === gameState.user.email;
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-4 rounded-lg border-2 ${
+                    isCurrentUser ? 'bg-yellow-50 border-yellow-300' : 'bg-gray-50 border-gray-200'
+                }`;
+                
+                let rankEmoji = '';
+                if (index === 0) rankEmoji = '🥇';
+                else if (index === 1) rankEmoji = '🥈';
+                else if (index === 2) rankEmoji = '🥉';
+                
+                div.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="text-xl font-bold ${isCurrentUser ? 'text-yellow-600' : 'text-gray-600'}">
+                            ${rankEmoji || `#${index + 1}`}
+                        </div>
+                        <div>
+                            <div class="font-semibold ${isCurrentUser ? 'text-yellow-800' : 'text-gray-800'}">
+                                ${entry.name}${isCurrentUser ? ' (You)' : ''}
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                ${entry.points} pts • Lvl ${entry.level} • ${entry.streak}🔥
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-lg font-bold ${isCurrentUser ? 'text-yellow-600' : 'text-gray-600'}">
+                            ${sortBy === 'points' ? entry.points : sortBy === 'level' ? entry.level : entry.streak}
+                        </div>
+                    </div>
+                `;
+                
+                leaderboardList.appendChild(div);
+            });
+        }
+
+        // Statistics Functions
+        function updateStatistics() {
+            // Time calculations
+            const totalHours = Math.floor(gameState.stats.totalTimeSpent / 3600);
+            const totalMinutes = Math.floor((gameState.stats.totalTimeSpent % 3600) / 60);
+            document.getElementById('totalTimeSpent').textContent = `${totalHours}h ${totalMinutes}m`;
+            
+            // Days since joined
+            if (gameState.stats.joinDate) {
+                const joinDate = new Date(gameState.stats.joinDate);
+                const today = new Date();
+                const daysDiff = Math.floor((today - joinDate) / (1000 * 60 * 60 * 24));
+                document.getElementById('daysSinceJoined').textContent = daysDiff;
+            }
+            
+            // Longest streak
+            document.getElementById('longestStreak').textContent = gameState.streak.longest;
+            
+            // Average score (placeholder calculation)
+            const avgScore = gameState.completedQuizzes.length > 0 ? 
+                Math.round((gameState.completedQuizzes.length / Object.keys(quizzes).length) * 100) : 0;
+            document.getElementById('averageScore').textContent = avgScore + '%';
+            
+            // Game statistics
+            document.getElementById('wordleBest').textContent = gameState.ecoWordle.bestScore;
+            document.getElementById('wasteBest').textContent = gameState.wasteSorting.bestScore;
+            document.getElementById('memoryBest').textContent = gameState.memoryMatch.bestScore;
+            document.getElementById('puzzleGames').textContent = gameState.ecoPuzzle.gamesPlayed;
+            
+            // Learning progress
+            const totalModules = Object.keys(lessons).length;
+            const completedModules = gameState.completedLessons.length;
+            document.getElementById('modulesCompleted').textContent = `${completedModules}/${totalModules}`;
+            
+            // Perfect scores (placeholder)
+            document.getElementById('perfectScores').textContent = '0';
+            
+            // Achievements
+            const unlockedAchievements = gameState.achievements.filter(a => a.unlocked).length;
+            document.getElementById('achievementsUnlocked').textContent = `${unlockedAchievements}/${achievements.length}`;
+            
+            // Current rank
+            updateUserInLeaderboard();
+            const sortedByPoints = [...globalLeaderboard].sort((a, b) => b.points - a.points);
+            const userRank = sortedByPoints.findIndex(entry => entry.email === gameState.user.email) + 1;
+            document.getElementById('currentRank').textContent = userRank > 0 ? `#${userRank}` : '#-';
+        }
+
+        // Handle login
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            gameState.user = {
+                name: formData.get('fullName') || document.getElementById('fullName').value,
+                email: formData.get('email') || document.getElementById('email').value,
+                institution: formData.get('institution') || document.getElementById('institution').value,
+                grade: formData.get('grade') || document.getElementById('grade').value,
+                gender: formData.get('gender') || document.getElementById('gender').value
+            };
+            
+            // Show dashboard
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            
+            // Update UI
+            document.getElementById('userName').textContent = gameState.user.name;
+            document.getElementById('userLevelNum').textContent = gameState.level;
+            updateProgress();
+            updateDashboard();
+            saveGame();
+        }
+
+        // Logout function
+        function logout() {
+            // Save final state
+            saveGame();
+            
+            // Clear current session but keep saved data
+            gameState.user = {};
+            
+            // Show login screen
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            
+            // Reset form
+            document.getElementById('loginForm').reset();
+            
+            showNotification('Logged out successfully! Your progress has been saved.', 'success');
+        }
+
+        // Get avatar based on gender
+        function getAvatarByGender(gender) {
+            switch(gender) {
+                case 'male': return '👨';
+                case 'female': return '👩';
+                case 'other': return '🧑';
+                default: return '👤';
+            }
+        }
+
+        // Start lesson
+        function startLesson(topic) {
+            const lesson = lessons[topic];
+            if (!lesson) return;
+            
+            document.getElementById('lessonTitle').textContent = lesson.title;
+            document.getElementById('lessonContent').innerHTML = lesson.content;
+            document.getElementById('lessonModal').classList.remove('hidden');
+            
+            gameState.currentLesson = topic;
+        }
+
+        // Close lesson modal
+        function closeLessonModal() {
+            document.getElementById('lessonModal').classList.add('hidden');
+        }
+
+        // Complete lesson
+        function completeLessonAndClose() {
+            if (gameState.currentLesson && !gameState.completedLessons.includes(gameState.currentLesson)) {
+                gameState.completedLessons.push(gameState.currentLesson);
+                addPoints(50);
+                checkAchievements();
+                updateProgress();
+                saveGame();
+                
+                // Show completion message
+                showNotification(`Lesson completed! +50 points 🎉`);
+            }
+            closeLessonModal();
+        }
+
+        // Start quiz
+        function startQuiz(topic) {
+            const quiz = quizzes[topic];
+            if (!quiz) return;
+            
+            gameState.currentQuiz = quiz;
+            gameState.currentQuizIndex = 0;
+            gameState.quizScore = 0;
+            gameState.currentQuizTopic = topic;
+            
+            document.getElementById('quizTitle').textContent = `${lessons[topic].title} Quiz`;
+            document.getElementById('totalQuestions').textContent = quiz.length;
+            document.getElementById('quizResults').classList.add('hidden');
+            document.getElementById('quizContent').classList.remove('hidden');
+            
+            showQuestion();
+            document.getElementById('quizModal').classList.remove('hidden');
+        }
+
+        // Show current question
+        function showQuestion() {
+            const question = gameState.currentQuiz[gameState.currentQuizIndex];
+            document.getElementById('currentQuestion').textContent = gameState.currentQuizIndex + 1;
+            document.getElementById('questionText').textContent = question.question;
+            document.getElementById('quizScore').textContent = gameState.quizScore;
+            
+            const progress = ((gameState.currentQuizIndex + 1) / gameState.currentQuiz.length) * 100;
+            document.getElementById('quizProgress').style.width = progress + '%';
+            
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'quiz-option w-full text-left p-4 border-2 border-gray-200 rounded-lg hover:border-blue-300 transition-all duration-200';
+                button.textContent = option;
+                button.onclick = () => selectAnswer(index);
+                optionsContainer.appendChild(button);
+            });
+            
+            document.getElementById('nextQuestionBtn').classList.add('hidden');
+        }
+
+        // Select answer
+        function selectAnswer(selectedIndex) {
+            const question = gameState.currentQuiz[gameState.currentQuizIndex];
+            const options = document.querySelectorAll('.quiz-option');
+            
+            // Disable all options
+            options.forEach(option => option.disabled = true);
+            
+            // Show correct/incorrect
+            options[selectedIndex].classList.add(selectedIndex === question.correct ? 'correct-answer' : 'wrong-answer');
+            options[question.correct].classList.add('correct-answer');
+            
+            // Update score
+            if (selectedIndex === question.correct) {
+                gameState.quizScore++;
+                addPoints(20);
+            }
+            
+            // Show next button or finish quiz
+            setTimeout(() => {
+                if (gameState.currentQuizIndex < gameState.currentQuiz.length - 1) {
+                    document.getElementById('nextQuestionBtn').classList.remove('hidden');
+                } else {
+                    finishQuiz();
+                }
+            }, 1500);
+        }
+
+        // Next question
+        function nextQuestion() {
+            gameState.currentQuizIndex++;
+            showQuestion();
+        }
+
+        // Finish quiz
+        function finishQuiz() {
+            const percentage = (gameState.quizScore / gameState.currentQuiz.length) * 100;
+            
+            document.getElementById('quizContent').classList.add('hidden');
+            document.getElementById('quizResults').classList.remove('hidden');
+            
+            document.getElementById('finalScore').textContent = `${gameState.quizScore}/${gameState.currentQuiz.length}`;
+            
+            if (percentage >= 80) {
+                document.getElementById('resultEmoji').textContent = '🎉';
+                document.getElementById('resultTitle').textContent = 'Excellent!';
+                document.getElementById('resultMessage').textContent = 'You have mastered this topic!';
+                
+                if (!gameState.completedQuizzes.includes(gameState.currentQuizTopic)) {
+                    gameState.completedQuizzes.push(gameState.currentQuizTopic);
+                    addPoints(100);
+                }
+            } else if (percentage >= 60) {
+                document.getElementById('resultEmoji').textContent = '👍';
+                document.getElementById('resultTitle').textContent = 'Good Job!';
+                document.getElementById('resultMessage').textContent = 'You passed! Keep learning to improve.';
+                
+                if (!gameState.completedQuizzes.includes(gameState.currentQuizTopic)) {
+                    gameState.completedQuizzes.push(gameState.currentQuizTopic);
+                    addPoints(75);
+                }
+            } else {
+                document.getElementById('resultEmoji').textContent = '📚';
+                document.getElementById('resultTitle').textContent = 'Keep Learning!';
+                document.getElementById('resultMessage').textContent = 'Review the lesson and try again.';
+            }
+            
+            if (percentage === 100) {
+                unlockAchievement('perfect-score');
+            }
+            
+            checkAchievements();
+            updateProgress();
+            saveGame();
+        }
+
+        // Close quiz modal
+        function closeQuizModal() {
+            document.getElementById('quizModal').classList.add('hidden');
+        }
+
+        // Start recycling game
+        function startRecyclingGame() {
+            gameState.recyclingGameActive = true;
+            gameState.gameScore = 0;
+            gameState.gameTimer = 60;
+            
+            document.getElementById('gameScore').textContent = '0';
+            document.getElementById('gameTimer').textContent = '60';
+            document.getElementById('recyclingGameModal').classList.remove('hidden');
+            
+            // Populate items
+            const itemsContainer = document.getElementById('itemsToSort');
+            itemsContainer.innerHTML = '';
+            
+            // Shuffle and select 8 random items
+            const shuffledItems = [...recyclingItems].sort(() => Math.random() - 0.5).slice(0, 8);
+            
+            shuffledItems.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'drag-item bg-white border-2 border-gray-300 rounded-lg p-3 text-center cursor-grab hover:shadow-md transition-all';
+                itemDiv.draggable = true;
+                itemDiv.dataset.type = item.type;
+                itemDiv.innerHTML = `
+                    <div class="text-2xl mb-1">${item.emoji}</div>
+                    <div class="text-sm font-medium">${item.name}</div>
+                `;
+                
+                // Add drag event listeners
+                itemDiv.addEventListener('dragstart', handleDragStart);
+                itemDiv.addEventListener('dragend', handleDragEnd);
+                
+                itemsContainer.appendChild(itemDiv);
+            });
+            
+            // Set up drop zones
+            const dropZones = document.querySelectorAll('.drop-zone');
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('drop', handleDrop);
+                zone.addEventListener('dragenter', handleDragEnter);
+                zone.addEventListener('dragleave', handleDragLeave);
+            });
+            
+            // Start timer
+            startGameTimer();
+        }
+
+        // Drag and drop handlers
+        let draggedItem = null;
+
+        function handleDragStart(e) {
+            draggedItem = e.target;
+            e.target.style.opacity = '0.5';
+        }
+
+        function handleDragEnd(e) {
+            e.target.style.opacity = '1';
+            draggedItem = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            e.target.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.target.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.target.classList.remove('drag-over');
+            
+            if (draggedItem) {
+                const itemType = draggedItem.dataset.type;
+                const binType = e.target.dataset.bin;
+                
+                if (itemType === binType) {
+                    // Correct placement
+                    gameState.gameScore += 10;
+                    draggedItem.remove();
+                    showNotification('Correct! +10 points', 'success');
+                } else {
+                    // Incorrect placement
+                    gameState.gameScore = Math.max(0, gameState.gameScore - 5);
+                    showNotification('Wrong bin! -5 points', 'error');
+                }
+                
+                document.getElementById('gameScore').textContent = gameState.gameScore;
+                
+                // Check if all items are sorted
+                if (document.getElementById('itemsToSort').children.length === 0) {
+                    endRecyclingGame(true);
+                }
+            }
+        }
+
+        // Game timer
+        function startGameTimer() {
+            const timer = setInterval(() => {
+                gameState.gameTimer--;
+                document.getElementById('gameTimer').textContent = gameState.gameTimer;
+                
+                if (gameState.gameTimer <= 0) {
+                    clearInterval(timer);
+                    endRecyclingGame(false);
+                }
+            }, 1000);
+            
+            gameState.gameTimerInterval = timer;
+        }
+
+        // End recycling game
+        function endRecyclingGame(completed) {
+            if (gameState.gameTimerInterval) {
+                clearInterval(gameState.gameTimerInterval);
+            }
+            
+            gameState.recyclingGameActive = false;
+            
+            if (gameState.gameScore >= 100) {
+                unlockAchievement('recycling-pro');
+            }
+            
+            if (completed && gameState.gameTimer > 30) {
+                unlockAchievement('speed-demon');
+            }
+            
+            addPoints(gameState.gameScore);
+            checkAchievements();
+            updateProgress();
+            saveGame();
+            
+            const message = completed ? 
+                `Game completed! You earned ${gameState.gameScore} points! 🎉` :
+                `Time's up! You earned ${gameState.gameScore} points!`;
+            
+            showNotification(message);
+        }
+
+        // Close recycling game
+        function closeRecyclingGame() {
+            if (gameState.gameTimerInterval) {
+                clearInterval(gameState.gameTimerInterval);
+            }
+            document.getElementById('recyclingGameModal').classList.add('hidden');
+        }
+
+        // Show profile
+        function showProfile() {
+            document.getElementById('profileName').textContent = gameState.user.name;
+            document.getElementById('profileEmail').textContent = gameState.user.email;
+            document.getElementById('profileInstitution').textContent = `${gameState.user.institution} - ${gameState.user.grade}`;
+            document.getElementById('profilePoints').textContent = gameState.points;
+            document.getElementById('profileLevel').textContent = gameState.level;
+            document.getElementById('profileAvatar').textContent = getAvatarByGender(gameState.user.gender);
+            document.getElementById('profileModal').classList.remove('hidden');
+        }
+
+        // Close profile
+        function closeProfile() {
+            document.getElementById('profileModal').classList.add('hidden');
+        }
+
+        // Add points and check for level up
+        function addPoints(points) {
+            gameState.points += points;
+            
+            // Calculate level (every 200 points = 1 level)
+            const newLevel = Math.floor(gameState.points / 200) + 1;
+            if (newLevel > gameState.level) {
+                gameState.level = newLevel;
+                showNotification(`Level up! You're now level ${gameState.level}! 🚀`);
+                
+                if (gameState.level >= 5) {
+                    unlockAchievement('level-up');
+                }
+            }
+            
+            // Update UI
+            document.getElementById('userPoints').textContent = gameState.points;
+            document.getElementById('userLevelNum').textContent = gameState.level;
+            
+            // Check point-based achievements
+            if (gameState.points >= 500) {
+                unlockAchievement('point-collector');
+            }
+        }
+
+        // Update progress display
+        function updateProgress() {
+            const totalLessons = Object.keys(lessons).length;
+            const totalQuizzes = Object.keys(quizzes).length;
+            const totalAchievements = achievements.length;
+            
+            const completedLessons = gameState.completedLessons.length;
+            const completedQuizzes = gameState.completedQuizzes.length;
+            const unlockedAchievements = gameState.achievements.filter(a => a.unlocked).length;
+            
+            document.getElementById('lessonsCompleted').textContent = `${completedLessons}/${totalLessons}`;
+            document.getElementById('quizzesPassed').textContent = `${completedQuizzes}/${totalQuizzes}`;
+            document.getElementById('badgesEarned').textContent = `${unlockedAchievements}/${totalAchievements}`;
+            
+            // Calculate overall progress
+            const totalTasks = totalLessons + totalQuizzes + totalAchievements;
+            const completedTasks = completedLessons + completedQuizzes + unlockedAchievements;
+            const overallProgress = Math.round((completedTasks / totalTasks) * 100);
+            
+            document.getElementById('overallProgress').textContent = `${overallProgress}%`;
+            document.getElementById('progressBar').style.width = `${overallProgress}%`;
+        }
+
+        // Check and unlock achievements
+        function checkAchievements() {
+            // First lesson
+            if (gameState.completedLessons.length >= 1) {
+                unlockAchievement('first-lesson');
+            }
+            
+            // First quiz
+            if (gameState.completedQuizzes.length >= 1) {
+                unlockAchievement('quiz-master');
+            }
+            
+            // Module completions
+            if (gameState.completedLessons.includes('climate') && gameState.completedQuizzes.includes('climate')) {
+                unlockAchievement('climate-expert');
+            }
+            
+            if (gameState.completedLessons.includes('energy') && gameState.completedQuizzes.includes('energy')) {
+                unlockAchievement('energy-saver');
+            }
+            
+            if (gameState.completedLessons.includes('water') && gameState.completedQuizzes.includes('water')) {
+                unlockAchievement('water-guardian');
+            }
+            
+            if (gameState.completedLessons.includes('biodiversity') && gameState.completedQuizzes.includes('biodiversity')) {
+                unlockAchievement('green-thumb');
+            }
+            
+            // All modules
+            const allTopics = ['climate', 'recycling', 'energy', 'biodiversity', 'water', 'sustainable'];
+            const completedModules = allTopics.filter(topic => 
+                gameState.completedLessons.includes(topic) && 
+                (gameState.completedQuizzes.includes(topic) || topic === 'recycling')
+            );
+            
+            if (completedModules.length >= 6) {
+                unlockAchievement('eco-warrior');
+            }
+            
+            // Learning milestones
+            if (gameState.completedLessons.length >= 5) {
+                unlockAchievement('knowledge-seeker');
+            }
+            
+            if (gameState.completedQuizzes.length >= 5) {
+                unlockAchievement('quiz-champion');
+            }
+            
+            updateAchievementsDisplay();
+        }
+
+        // Unlock achievement
+        function unlockAchievement(achievementId) {
+            const achievement = gameState.achievements.find(a => a.id === achievementId);
+            if (achievement && !achievement.unlocked) {
+                achievement.unlocked = true;
+                showNotification(`Achievement unlocked: ${achievement.name} ${achievement.emoji}!`);
+                addPoints(25);
+                updateAchievementsDisplay();
+            }
+        }
+
+        // Update achievements display
+        function updateAchievementsDisplay() {
+            const grid = document.getElementById('achievementsGrid');
+            grid.innerHTML = '';
+            
+            gameState.achievements.forEach(achievement => {
+                const div = document.createElement('div');
+                div.className = `text-center p-4 rounded-lg border-2 transition-all ${
+                    achievement.unlocked 
+                        ? 'bg-yellow-50 border-yellow-300 badge' 
+                        : 'bg-gray-50 border-gray-200 opacity-50'
+                }`;
+                
+                div.innerHTML = `
+                    <div class="text-3xl mb-2">${achievement.emoji}</div>
+                    <h4 class="font-semibold text-sm ${achievement.unlocked ? 'text-yellow-800' : 'text-gray-600'}">${achievement.name}</h4>
+                    <p class="text-xs ${achievement.unlocked ? 'text-yellow-700' : 'text-gray-500'}">${achievement.description}</p>
+                `;
+                
+                grid.appendChild(div);
+            });
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg text-white font-semibold fade-in ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Save game state
+        function saveGame() {
+            localStorage.setItem('ecoquest-save', JSON.stringify(gameState));
+        }
+
+        // ===== NEW GAME FUNCTIONS =====
+
+        // EcoWordle Game Functions
+        function openEcoWordle() {
+            gameState.ecoWordle.gameActive = true;
+            document.getElementById('ecoWordleModal').classList.remove('hidden');
+            initializeWordle();
+        }
+
+        function closeEcoWordle() {
+            gameState.ecoWordle.gameActive = false;
+            document.getElementById('ecoWordleModal').classList.add('hidden');
+        }
+
+        function initializeWordle() {
+            const level = gameState.ecoWordle.level - 1;
+            const wordData = ecoWordleWords[level] || ecoWordleWords[0];
+            
+            gameState.ecoWordle.currentWord = wordData.word;
+            gameState.ecoWordle.attempts = 0;
+            gameState.ecoWordle.guesses = [];
+            
+            document.getElementById('wordleLevel').textContent = gameState.ecoWordle.level;
+            document.getElementById('wordleAttempts').textContent = '0';
+            document.getElementById('wordleScore').textContent = gameState.ecoWordle.score;
+            document.getElementById('wordleHintText').textContent = wordData.hint;
+            document.getElementById('nextWordleBtn').classList.add('hidden');
+            
+            createWordleGrid();
+            createWordleKeyboard();
+        }
+
+        function createWordleGrid() {
+            const grid = document.getElementById('wordleGrid');
+            grid.innerHTML = '';
+            
+            for (let i = 0; i < 6; i++) {
+                const row = document.createElement('div');
+                row.className = 'grid grid-cols-' + gameState.ecoWordle.currentWord.length + ' gap-2';
+                
+                for (let j = 0; j < gameState.ecoWordle.currentWord.length; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'w-12 h-12 border-2 border-gray-300 rounded flex items-center justify-center text-xl font-bold';
+                    cell.id = `cell-${i}-${j}`;
+                    row.appendChild(cell);
+                }
+                grid.appendChild(row);
+            }
+        }
+
+        function createWordleKeyboard() {
+            const keyboard = document.getElementById('wordleKeyboard');
+            keyboard.innerHTML = '';
+            
+            const keys = 'QWERTYUIOPASDFGHJKLZXCVBNM'.split('');
+            
+            keys.forEach(key => {
+                const button = document.createElement('button');
+                button.className = 'bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-3 rounded text-sm transition-colors';
+                button.textContent = key;
+                button.onclick = () => handleWordleKeyPress(key);
+                button.id = `key-${key}`;
+                keyboard.appendChild(button);
+            });
+            
+            // Add Enter and Backspace
+            const enterBtn = document.createElement('button');
+            enterBtn.className = 'bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded text-sm transition-colors col-span-2';
+            enterBtn.textContent = 'ENTER';
+            enterBtn.onclick = () => submitWordleGuess();
+            keyboard.appendChild(enterBtn);
+            
+            const backBtn = document.createElement('button');
+            backBtn.className = 'bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded text-sm transition-colors';
+            backBtn.textContent = '⌫';
+            backBtn.onclick = () => handleWordleBackspace();
+            keyboard.appendChild(backBtn);
+        }
+
+        let currentWordleGuess = '';
+
+        function handleWordleKeyPress(key) {
+            if (currentWordleGuess.length < gameState.ecoWordle.currentWord.length) {
+                currentWordleGuess += key;
+                updateWordleDisplay();
+            }
+        }
+
+        function handleWordleBackspace() {
+            if (currentWordleGuess.length > 0) {
+                currentWordleGuess = currentWordleGuess.slice(0, -1);
+                updateWordleDisplay();
+            }
+        }
+
+        function updateWordleDisplay() {
+            const row = gameState.ecoWordle.attempts;
+            for (let i = 0; i < gameState.ecoWordle.currentWord.length; i++) {
+                const cell = document.getElementById(`cell-${row}-${i}`);
+                cell.textContent = currentWordleGuess[i] || '';
+            }
+        }
+
+        function submitWordleGuess() {
+            if (currentWordleGuess.length !== gameState.ecoWordle.currentWord.length) return;
+            
+            const row = gameState.ecoWordle.attempts;
+            const targetWord = gameState.ecoWordle.currentWord;
+            
+            // Color the cells
+            for (let i = 0; i < targetWord.length; i++) {
+                const cell = document.getElementById(`cell-${row}-${i}`);
+                const letter = currentWordleGuess[i];
+                
+                if (letter === targetWord[i]) {
+                    cell.className += ' bg-green-500 text-white border-green-500';
+                    document.getElementById(`key-${letter}`).className = 'bg-green-500 text-white font-semibold py-2 px-3 rounded text-sm';
+                } else if (targetWord.includes(letter)) {
+                    cell.className += ' bg-yellow-500 text-white border-yellow-500';
+                    if (!document.getElementById(`key-${letter}`).classList.contains('bg-green-500')) {
+                        document.getElementById(`key-${letter}`).className = 'bg-yellow-500 text-white font-semibold py-2 px-3 rounded text-sm';
+                    }
+                } else {
+                    cell.className += ' bg-gray-500 text-white border-gray-500';
+                    document.getElementById(`key-${letter}`).className = 'bg-gray-500 text-white font-semibold py-2 px-3 rounded text-sm';
+                }
+            }
+            
+            gameState.ecoWordle.attempts++;
+            gameState.ecoWordle.guesses.push(currentWordleGuess);
+            document.getElementById('wordleAttempts').textContent = gameState.ecoWordle.attempts;
+            
+            if (currentWordleGuess === targetWord) {
+                // Win!
+                const points = Math.max(100 - (gameState.ecoWordle.attempts - 1) * 15, 25);
+                gameState.ecoWordle.score += points;
+                addPoints(points);
+                showNotification(`Correct! +${points} points! 🎉`);
+                document.getElementById('nextWordleBtn').classList.remove('hidden');
+            } else if (gameState.ecoWordle.attempts >= 6) {
+                // Game over
+                showNotification(`Game over! The word was ${targetWord}`);
+                document.getElementById('nextWordleBtn').classList.remove('hidden');
+            }
+            
+            currentWordleGuess = '';
+            saveGame();
+        }
+
+        function nextWordleLevel() {
+            if (gameState.ecoWordle.level < 25) {
+                gameState.ecoWordle.level++;
+                initializeWordle();
+            } else {
+                showNotification('Congratulations! You completed all EcoWordle levels! 🏆');
+                closeEcoWordle();
+            }
+            
+            // Update game statistics
+            gameState.ecoWordle.gamesPlayed++;
+            if (gameState.ecoWordle.score > gameState.ecoWordle.bestScore) {
+                gameState.ecoWordle.bestScore = gameState.ecoWordle.score;
+            }
+            saveGame();
+        }
+
+        // Eco Puzzle Game Functions
+        function openEcoPuzzle() {
+            gameState.ecoPuzzle.gameActive = true;
+            document.getElementById('ecoPuzzleModal').classList.remove('hidden');
+            initializePuzzle();
+        }
+
+        function closeEcoPuzzle() {
+            gameState.ecoPuzzle.gameActive = false;
+            document.getElementById('ecoPuzzleModal').classList.add('hidden');
+        }
+
+        function initializePuzzle() {
+            const level = gameState.ecoPuzzle.level;
+            const size = Math.min(3 + Math.floor((level - 1) / 5), 6); // 3x3 to 6x6
+            
+            gameState.ecoPuzzle.moves = 0;
+            gameState.ecoPuzzle.size = size;
+            gameState.ecoPuzzle.maxMoves = size * size * 10; // Dynamic max moves based on size
+            
+            document.getElementById('puzzleLevel').textContent = level;
+            document.getElementById('puzzleMoves').textContent = '0';
+            document.getElementById('puzzleMaxMoves').textContent = gameState.ecoPuzzle.maxMoves;
+            document.getElementById('puzzleBest').textContent = gameState.ecoPuzzle.bestScores[level] || '-';
+            document.getElementById('puzzleGoal').textContent = size * size - 1;
+            document.getElementById('nextPuzzleBtn').classList.add('hidden');
+            
+            createPuzzleGrid(size);
+            shufflePuzzle();
+        }
+
+        function createPuzzleGrid(size) {
+            const grid = document.getElementById('puzzleGrid');
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
+            
+            // Create solved state first
+            gameState.ecoPuzzle.solvedGrid = [];
+            for (let i = 0; i < size * size - 1; i++) {
+                gameState.ecoPuzzle.solvedGrid.push(i + 1);
+            }
+            gameState.ecoPuzzle.solvedGrid.push(0); // Empty space
+            
+            // Initialize current grid
+            gameState.ecoPuzzle.grid = [...gameState.ecoPuzzle.solvedGrid];
+            
+            for (let i = 0; i < size * size; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'w-16 h-16 bg-green-100 border-2 border-green-300 rounded flex items-center justify-center font-bold text-lg cursor-pointer hover:bg-green-200 transition-colors';
+                tile.onclick = () => movePuzzleTile(i);
+                tile.id = `puzzle-tile-${i}`;
+                grid.appendChild(tile);
+            }
+            
+            updatePuzzleDisplay();
+        }
+
+        function updatePuzzleDisplay() {
+            const size = gameState.ecoPuzzle.size;
+            for (let i = 0; i < size * size; i++) {
+                const tile = document.getElementById(`puzzle-tile-${i}`);
+                const value = gameState.ecoPuzzle.grid[i];
+                
+                if (value === 0) {
+                    tile.textContent = '';
+                    tile.className = 'w-16 h-16 bg-gray-200 border-2 border-gray-300 rounded flex items-center justify-center font-bold text-lg cursor-pointer';
+                } else {
+                    tile.textContent = value;
+                    tile.className = 'w-16 h-16 bg-green-100 border-2 border-green-300 rounded flex items-center justify-center font-bold text-lg cursor-pointer hover:bg-green-200 transition-colors';
+                }
+            }
+        }
+
+        function movePuzzleTile(index) {
+            const size = gameState.ecoPuzzle.size;
+            const emptyIndex = gameState.ecoPuzzle.grid.indexOf(0);
+            
+            // Check if moves limit reached
+            if (gameState.ecoPuzzle.moves >= gameState.ecoPuzzle.maxMoves) {
+                showNotification('Move limit reached! Try shuffling to restart.', 'error');
+                return;
+            }
+            
+            // Check if the tile can move (adjacent to empty space)
+            const canMove = (
+                (index === emptyIndex - 1 && emptyIndex % size !== 0) || // Left
+                (index === emptyIndex + 1 && index % size !== 0) || // Right
+                (index === emptyIndex - size) || // Up
+                (index === emptyIndex + size) // Down
+            );
+            
+            if (canMove) {
+                // Swap tiles
+                [gameState.ecoPuzzle.grid[index], gameState.ecoPuzzle.grid[emptyIndex]] = 
+                [gameState.ecoPuzzle.grid[emptyIndex], gameState.ecoPuzzle.grid[index]];
+                
+                gameState.ecoPuzzle.moves++;
+                document.getElementById('puzzleMoves').textContent = gameState.ecoPuzzle.moves;
+                
+                updatePuzzleDisplay();
+                
+                // Check if solved
+                if (JSON.stringify(gameState.ecoPuzzle.grid) === JSON.stringify(gameState.ecoPuzzle.solvedGrid)) {
+                    const points = Math.max(200 - gameState.ecoPuzzle.moves * 2, 50);
+                    addPoints(points);
+                    
+                    // Update best score
+                    const level = gameState.ecoPuzzle.level;
+                    if (!gameState.ecoPuzzle.bestScores[level] || gameState.ecoPuzzle.moves < gameState.ecoPuzzle.bestScores[level]) {
+                        gameState.ecoPuzzle.bestScores[level] = gameState.ecoPuzzle.moves;
+                        document.getElementById('puzzleBest').textContent = gameState.ecoPuzzle.moves;
+                    }
+                    
+                    showNotification(`Puzzle solved in ${gameState.ecoPuzzle.moves} moves! +${points} points! 🧩`);
+                    document.getElementById('nextPuzzleBtn').classList.remove('hidden');
+                }
+                
+                saveGame();
+            }
+        }
+
+        function shufflePuzzle() {
+            const size = gameState.ecoPuzzle.size;
+            // Perform random valid moves to shuffle
+            for (let i = 0; i < 1000; i++) {
+                const emptyIndex = gameState.ecoPuzzle.grid.indexOf(0);
+                const possibleMoves = [];
+                
+                if (emptyIndex % size !== 0) possibleMoves.push(emptyIndex - 1); // Left
+                if (emptyIndex % size !== size - 1) possibleMoves.push(emptyIndex + 1); // Right
+                if (emptyIndex >= size) possibleMoves.push(emptyIndex - size); // Up
+                if (emptyIndex < size * (size - 1)) possibleMoves.push(emptyIndex + size); // Down
+                
+                const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+                [gameState.ecoPuzzle.grid[emptyIndex], gameState.ecoPuzzle.grid[randomMove]] = 
+                [gameState.ecoPuzzle.grid[randomMove], gameState.ecoPuzzle.grid[emptyIndex]];
+            }
+            
+            gameState.ecoPuzzle.moves = 0;
+            document.getElementById('puzzleMoves').textContent = '0';
+            updatePuzzleDisplay();
+        }
+
+        function nextPuzzleLevel() {
+            if (gameState.ecoPuzzle.level < 25) {
+                gameState.ecoPuzzle.level++;
+                initializePuzzle();
+            } else {
+                showNotification('Congratulations! You completed all Eco Puzzle levels! 🏆');
+                closeEcoPuzzle();
+            }
+            
+            // Update game statistics
+            gameState.ecoPuzzle.gamesPlayed++;
+            saveGame();
+        }
+
+        // Waste Sorting Game Functions
+        function openWasteSorting() {
+            gameState.wasteSorting.gameActive = true;
+            document.getElementById('wasteSortingModal').classList.remove('hidden');
+            initializeWasteSorting();
+        }
+
+        function closeWasteSorting() {
+            gameState.wasteSorting.gameActive = false;
+            document.getElementById('wasteSortingModal').classList.add('hidden');
+            if (gameState.wasteSorting.timerInterval) {
+                clearInterval(gameState.wasteSorting.timerInterval);
+            }
+        }
+
+        function initializeWasteSorting() {
+            const level = gameState.wasteSorting.level;
+            gameState.wasteSorting.score = 0;
+            gameState.wasteSorting.timer = Math.max(90 - level * 2, 30); // Decreasing time per level
+            
+            document.getElementById('wasteSortingLevel').textContent = level;
+            document.getElementById('wasteSortingScore').textContent = '0';
+            document.getElementById('wasteSortingTimer').textContent = gameState.wasteSorting.timer;
+            document.getElementById('nextWasteSortingBtn').classList.add('hidden');
+            
+            populateWasteSortingItems();
+            startWasteSortingTimer();
+            setupWasteSortingDropZones();
+        }
+
+        function populateWasteSortingItems() {
+            const container = document.getElementById('wasteItemsToSort');
+            container.innerHTML = '';
+            
+            const level = gameState.wasteSorting.level;
+            const itemCount = Math.min(8 + Math.floor(level / 3), 20); // 8-20 items
+            
+            // Get random items
+            const shuffledItems = [...wasteSortingItems].sort(() => Math.random() - 0.5).slice(0, itemCount);
+            
+            shuffledItems.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'waste-drag-item bg-white border-2 border-gray-300 rounded-lg p-3 text-center cursor-grab hover:shadow-md transition-all';
+                itemDiv.draggable = true;
+                itemDiv.dataset.type = item.type;
+                itemDiv.innerHTML = `
+                    <div class="text-2xl mb-1">${item.emoji}</div>
+                    <div class="text-sm font-medium">${item.name}</div>
+                `;
+                
+                itemDiv.addEventListener('dragstart', handleWasteDragStart);
+                itemDiv.addEventListener('dragend', handleWasteDragEnd);
+                
+                container.appendChild(itemDiv);
+            });
+        }
+
+        function setupWasteSortingDropZones() {
+            const dropZones = document.querySelectorAll('.waste-drop-zone');
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', handleWasteDragOver);
+                zone.addEventListener('drop', handleWasteDrop);
+                zone.addEventListener('dragenter', handleWasteDragEnter);
+                zone.addEventListener('dragleave', handleWasteDragLeave);
+            });
+        }
+
+        let wasteDraggedItem = null;
+
+        function handleWasteDragStart(e) {
+            wasteDraggedItem = e.target;
+            e.target.style.opacity = '0.5';
+        }
+
+        function handleWasteDragEnd(e) {
+            e.target.style.opacity = '1';
+            wasteDraggedItem = null;
+        }
+
+        function handleWasteDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleWasteDragEnter(e) {
+            e.preventDefault();
+            e.target.classList.add('drag-over');
+        }
+
+        function handleWasteDragLeave(e) {
+            e.target.classList.remove('drag-over');
+        }
+
+        function handleWasteDrop(e) {
+            e.preventDefault();
+            e.target.classList.remove('drag-over');
+            
+            if (wasteDraggedItem) {
+                const itemType = wasteDraggedItem.dataset.type;
+                const binType = e.target.dataset.bin;
+                
+                if (itemType === binType) {
+                    // Correct placement
+                    gameState.wasteSorting.score += 15;
+                    wasteDraggedItem.remove();
+                    showNotification('Correct! +15 points', 'success');
+                } else {
+                    // Incorrect placement
+                    gameState.wasteSorting.score = Math.max(0, gameState.wasteSorting.score - 5);
+                    showNotification('Wrong bin! -5 points', 'error');
+                }
+                
+                document.getElementById('wasteSortingScore').textContent = gameState.wasteSorting.score;
+                
+                // Check if all items are sorted
+                if (document.getElementById('wasteItemsToSort').children.length === 0) {
+                    endWasteSortingLevel(true);
+                }
+            }
+        }
+
+        function startWasteSortingTimer() {
+            gameState.wasteSorting.timerInterval = setInterval(() => {
+                gameState.wasteSorting.timer--;
+                document.getElementById('wasteSortingTimer').textContent = gameState.wasteSorting.timer;
+                
+                if (gameState.wasteSorting.timer <= 0) {
+                    clearInterval(gameState.wasteSorting.timerInterval);
+                    endWasteSortingLevel(false);
+                }
+            }, 1000);
+        }
+
+        function endWasteSortingLevel(completed) {
+            if (gameState.wasteSorting.timerInterval) {
+                clearInterval(gameState.wasteSorting.timerInterval);
+            }
+            
+            const bonusPoints = completed ? 50 : 0;
+            const totalPoints = gameState.wasteSorting.score + bonusPoints;
+            
+            addPoints(totalPoints);
+            
+            const message = completed ? 
+                `Level completed! You earned ${totalPoints} points! 🎉` :
+                `Time's up! You earned ${gameState.wasteSorting.score} points!`;
+            
+            showNotification(message);
+            
+            if (completed || gameState.wasteSorting.score >= 50) {
+                document.getElementById('nextWasteSortingBtn').classList.remove('hidden');
+            }
+            
+            saveGame();
+        }
+
+        function nextWasteSortingLevel() {
+            if (gameState.wasteSorting.level < 25) {
+                gameState.wasteSorting.level++;
+                initializeWasteSorting();
+            } else {
+                showNotification('Congratulations! You completed all Waste Sorting levels! 🏆');
+                closeWasteSorting();
+            }
+            
+            // Update game statistics
+            gameState.wasteSorting.gamesPlayed++;
+            if (gameState.wasteSorting.score > gameState.wasteSorting.bestScore) {
+                gameState.wasteSorting.bestScore = gameState.wasteSorting.score;
+            }
+            saveGame();
+        }
+
+        // Memory Match Game Functions
+        function openMemoryMatch() {
+            gameState.memoryMatch.gameActive = true;
+            document.getElementById('memoryMatchModal').classList.remove('hidden');
+            initializeMemoryMatch();
+        }
+
+        function closeMemoryMatch() {
+            gameState.memoryMatch.gameActive = false;
+            document.getElementById('memoryMatchModal').classList.add('hidden');
+        }
+
+        function initializeMemoryMatch() {
+            const level = gameState.memoryMatch.level;
+            const pairCount = Math.min(4 + Math.floor((level - 1) / 3), 12); // 4-12 pairs
+            
+            gameState.memoryMatch.matches = 0;
+            gameState.memoryMatch.moves = 0;
+            gameState.memoryMatch.flippedCards = [];
+            gameState.memoryMatch.matchedPairs = [];
+            gameState.memoryMatch.pairCount = pairCount;
+            gameState.memoryMatch.maxMoves = pairCount * 4; // Dynamic max moves
+            
+            document.getElementById('memoryLevel').textContent = level;
+            document.getElementById('memoryMatches').textContent = '0';
+            document.getElementById('memoryTotal').textContent = pairCount;
+            document.getElementById('memoryMoves').textContent = '0';
+            document.getElementById('memoryMaxMoves').textContent = gameState.memoryMatch.maxMoves;
+            document.getElementById('nextMemoryBtn').classList.add('hidden');
+            
+            createMemoryGrid(pairCount);
+        }
+
+        function createMemoryGrid(pairCount) {
+            const grid = document.getElementById('memoryGrid');
+            grid.innerHTML = '';
+            
+            // Select random pairs
+            const selectedPairs = memoryMatchPairs.slice(0, pairCount);
+            const cards = [...selectedPairs, ...selectedPairs]; // Duplicate for pairs
+            
+            // Shuffle cards
+            for (let i = cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cards[i], cards[j]] = [cards[j], cards[i]];
+            }
+            
+            gameState.memoryMatch.cards = cards;
+            
+            // Set grid layout
+            const cols = Math.ceil(Math.sqrt(cards.length));
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            
+            // Create card elements
+            cards.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'memory-card w-16 h-16 bg-blue-100 border-2 border-blue-300 rounded-lg flex items-center justify-center text-2xl cursor-pointer hover:bg-blue-200 transition-all';
+                cardElement.dataset.cardId = card.id;
+                cardElement.dataset.index = index;
+                cardElement.onclick = () => flipMemoryCard(index);
+                cardElement.innerHTML = '<div class="card-back">?</div>';
+                grid.appendChild(cardElement);
+            });
+        }
+
+        function flipMemoryCard(index) {
+            if (gameState.memoryMatch.flippedCards.length >= 2) return;
+            if (gameState.memoryMatch.flippedCards.includes(index)) return;
+            if (gameState.memoryMatch.matchedPairs.includes(index)) return;
+            
+            const cardElement = document.querySelector(`[data-index="${index}"]`);
+            const card = gameState.memoryMatch.cards[index];
+            
+            // Flip card
+            cardElement.innerHTML = card.emoji;
+            cardElement.classList.add('bg-white', 'border-yellow-400');
+            gameState.memoryMatch.flippedCards.push(index);
+            
+            if (gameState.memoryMatch.flippedCards.length === 2) {
+                gameState.memoryMatch.moves++;
+                document.getElementById('memoryMoves').textContent = gameState.memoryMatch.moves;
+                
+                setTimeout(() => {
+                    checkMemoryMatch();
+                }, 1000);
+            }
+        }
+
+        function checkMemoryMatch() {
+            const [index1, index2] = gameState.memoryMatch.flippedCards;
+            const card1 = gameState.memoryMatch.cards[index1];
+            const card2 = gameState.memoryMatch.cards[index2];
+            
+            if (card1.id === card2.id) {
+                // Match found!
+                gameState.memoryMatch.matches++;
+                gameState.memoryMatch.matchedPairs.push(index1, index2);
+                
+                const card1Element = document.querySelector(`[data-index="${index1}"]`);
+                const card2Element = document.querySelector(`[data-index="${index2}"]`);
+                
+                card1Element.classList.add('bg-green-100', 'border-green-400');
+                card2Element.classList.add('bg-green-100', 'border-green-400');
+                
+                document.getElementById('memoryMatches').textContent = gameState.memoryMatch.matches;
+                
+                // Check if game is complete
+                if (gameState.memoryMatch.matches === gameState.memoryMatch.pairCount) {
+                    const points = Math.max(150 - gameState.memoryMatch.moves * 3, 50);
+                    addPoints(points);
+                    showNotification(`All pairs matched! +${points} points! 🃏`);
+                    document.getElementById('nextMemoryBtn').classList.remove('hidden');
+                }
+            } else {
+                // No match
+                const card1Element = document.querySelector(`[data-index="${index1}"]`);
+                const card2Element = document.querySelector(`[data-index="${index2}"]`);
+                
+                card1Element.innerHTML = '<div class="card-back">?</div>';
+                card2Element.innerHTML = '<div class="card-back">?</div>';
+                card1Element.classList.remove('bg-white', 'border-yellow-400');
+                card2Element.classList.remove('bg-white', 'border-yellow-400');
+                
+                // Check if moves limit reached
+                if (gameState.memoryMatch.moves >= gameState.memoryMatch.maxMoves) {
+                    showNotification('Move limit reached! Game over. Try the next level!', 'error');
+                    setTimeout(() => {
+                        document.getElementById('nextMemoryBtn').classList.remove('hidden');
+                    }, 2000);
+                }
+            }
+            
+            gameState.memoryMatch.flippedCards = [];
+            saveGame();
+        }
+
+        function nextMemoryLevel() {
+            if (gameState.memoryMatch.level < 25) {
+                gameState.memoryMatch.level++;
+                initializeMemoryMatch();
+            } else {
+                showNotification('Congratulations! You completed all Memory Match levels! 🏆');
+                closeMemoryMatch();
+            }
+            
+            // Update game statistics
+            gameState.memoryMatch.gamesPlayed++;
+            const currentScore = Math.max(150 - gameState.memoryMatch.moves * 3, 50);
+            if (currentScore > gameState.memoryMatch.bestScore) {
+                gameState.memoryMatch.bestScore = currentScore;
+            }
+            saveGame();
+        }
+
+        // Hint toggle functions
+        function toggleWasteHint() {
+            const hint = document.getElementById('wasteHint');
+            hint.classList.toggle('hidden');
+        }
+
+        function toggleWordleHint() {
+            const hint = document.getElementById('wordleHintText');
+            hint.classList.toggle('hidden');
+        }
+
+        function togglePuzzleHint() {
+            const hint = document.getElementById('puzzleHint');
+            hint.classList.toggle('hidden');
+        }
+
+        function toggleMemoryHint() {
+            const hint = document.getElementById('memoryHint');
+            hint.classList.toggle('hidden');
+        }
+
+        // Initialize the app when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9817dcb3150eff6b',t:'MTc1ODI3MjEwNS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
